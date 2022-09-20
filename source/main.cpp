@@ -22,6 +22,9 @@ void ShutDown(SDL_Window* pWindow)
 
 int main(int argc, char* args[])
 {
+	float dotResult{};
+	dotResult = Vector3::Dot(Vector3::UnitX, Vector3::UnitX);
+	std::cout << dotResult;
 	//Unreferenced parameters
 	(void)argc;
 	(void)args;
