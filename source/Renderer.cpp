@@ -31,11 +31,26 @@ void Renderer::Render(Scene* pScene) const
 	{
 		for (int py{}; py < m_Height; ++py)
 		{
-			float gradient = px / static_cast<float>(m_Width);
-			gradient += py / static_cast<float>(m_Width);
-			gradient /= 2.0f;
+			Vector3 rayDirection{};
+			rayDirection.x = (2 * (px + 0.5f) / m_Width - 1) * (m_Width / m_Height);
+			rayDirection.y = 1 - 2 * (py + 0.5f) / m_Height;
+			rayDirection.z = 1.f;
 
-			ColorRGB finalColor{ gradient, gradient, gradient };
+			rayDirection.Normalize();
+
+			Ray ViewRay{ {0.f, 0.f, 0.f}, rayDirection };
+
+			ColorRGB finalColor{};
+
+			HitRecord closestHit{};
+
+			Sphere testSphere{ {0.f, 0.f, 100.f}, 50.f, 0 };
+			GeometryUtils::HitTest_Sphere(testSphere, ViewRay, closestHit);
+
+			if (closestHit.didHit)
+			{
+				finalColor = materials[closestHit.materialIndex]->Shade();
+			}
 
 			//Update Color in Buffer
 			finalColor.MaxToOne();

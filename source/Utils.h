@@ -13,7 +13,39 @@ namespace dae
 		inline bool HitTest_Sphere(const Sphere& sphere, const Ray& ray, HitRecord& hitRecord, bool ignoreHitRecord = false)
 		{
 			//todo W1
-			assert(false && "No Implemented Yet!");
+			const float A{ Vector3::Dot(ray.direction, ray.direction)};
+			const float B{ 2 * Vector3::Dot(ray.direction, ray.origin - sphere.origin) };
+			const float C{ Vector3::Dot(ray.origin - sphere.origin, ray.origin - sphere.origin) - sphere.radius * sphere.radius };
+
+			const float discriminant{ B * B - 4 * A * C };
+
+			if (discriminant > 0)
+			{
+				const float t0{ (-B - sqrtf(discriminant)) / 2 * A };
+				const float t1{ (-B + sqrtf(discriminant)) / 2 * A };
+
+				if (t0 > 0)
+				{
+					hitRecord.didHit = true;
+					hitRecord.materialIndex = sphere.materialIndex;
+					Vector3 normal{ sphere.origin - ray.origin };
+					normal.Normalize();
+					hitRecord.normal = normal;
+					hitRecord.origin = ray.origin + (((-B - sqrtf(discriminant)) / 2 * A) * ray.direction);
+					hitRecord.t = t0;
+				}
+				else if (t1 > 0)
+				{
+					hitRecord.didHit = true;
+					hitRecord.materialIndex = sphere.materialIndex;
+					Vector3 normal{ sphere.origin - ray.origin };
+					normal.Normalize();
+					hitRecord.normal = normal;
+					hitRecord.origin = ray.origin + (((-B - sqrtf(discriminant)) / 2 * A) * ray.direction);
+					hitRecord.t = t1;
+				}
+			}
+			
 			return false;
 		}
 
