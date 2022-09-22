@@ -44,12 +44,18 @@ void Renderer::Render(Scene* pScene) const
 
 			HitRecord closestHit{};
 
-			Sphere testSphere{ {0.f, 0.f, 100.f}, 50.f, 0 };
-			GeometryUtils::HitTest_Sphere(testSphere, ViewRay, closestHit);
+			//Sphere testSphere{ {0.f, 0.f, 100.f}, 50.f, 0 };
+			//GeometryUtils::HitTest_Sphere(testSphere, ViewRay, closestHit);
+
+			pScene->GetClosestHit(ViewRay, closestHit);
 
 			if (closestHit.didHit)
 			{
 				finalColor = materials[closestHit.materialIndex]->Shade();
+
+				//t value visulazation darker = smaller t
+				//const float scaled_t = closestHit.t / 500.f;
+				//finalColor = { scaled_t, scaled_t, scaled_t };
 			}
 
 			//Update Color in Buffer

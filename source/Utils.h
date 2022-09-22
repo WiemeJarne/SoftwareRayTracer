@@ -13,16 +13,17 @@ namespace dae
 		inline bool HitTest_Sphere(const Sphere& sphere, const Ray& ray, HitRecord& hitRecord, bool ignoreHitRecord = false)
 		{
 			//todo W1
+			const Vector3 sphereToRayOriginVector{ ray.origin - sphere.origin };
 			const float A{ Vector3::Dot(ray.direction, ray.direction)};
-			const float B{ 2 * Vector3::Dot(ray.direction, ray.origin - sphere.origin) };
-			const float C{ Vector3::Dot(ray.origin - sphere.origin, ray.origin - sphere.origin) - sphere.radius * sphere.radius };
+			const float B{ 2 * Vector3::Dot(ray.direction, sphereToRayOriginVector) };
+			const float C{ Vector3::Dot(sphereToRayOriginVector, sphereToRayOriginVector) - sphere.radius * sphere.radius };
 
 			const float discriminant{ B * B - 4 * A * C };
 
 			if (discriminant > 0)
 			{
-				const float t0{ (-B - sqrtf(discriminant)) / 2 * A };
-				const float t1{ (-B + sqrtf(discriminant)) / 2 * A };
+				const float t0{ (-B - sqrtf(discriminant)) / (2 * A) };
+				const float t1{ (-B + sqrtf(discriminant)) / (2 * A) };
 
 				if (t0 > 0)
 				{
@@ -60,7 +61,16 @@ namespace dae
 		inline bool HitTest_Plane(const Plane& plane, const Ray& ray, HitRecord& hitRecord, bool ignoreHitRecord = false)
 		{
 			//todo W1
-			assert(false && "No Implemented Yet!");
+			float t = Vector3::Dot(plane.origin - ray.origin, plane.normal) / Vector3::Dot(ray.direction, plane.normal);
+
+			if (t > 0)
+			{
+				hitRecord.didHit = true;
+				hitRecord.materialIndex = plane.materialIndex;
+				hitRecord.normal = plane.normal;
+				hitRecord.origin = ray.origin + t * ray.direction;
+				hitRecord.t = t;
+			}
 			return false;
 		}
 
