@@ -20,29 +20,25 @@ namespace dae
 
 			const float discriminant{ B * B - 4 * A * C };
 
+			const float t0{ (-B - sqrt(discriminant)) / (2.f * A) };
+			const float t1{ (-B + sqrt(discriminant)) / (2.f * A) };
+
 			if (discriminant > 0)
 			{
-				const float t0{ (-B - sqrtf(discriminant)) / (2 * A) };
-				const float t1{ (-B + sqrtf(discriminant)) / (2 * A) };
-
-				if (t0 > 0)
+				if (t0 > 0 && t0 < t1)
 				{
 					hitRecord.didHit = true;
 					hitRecord.materialIndex = sphere.materialIndex;
-					Vector3 normal{ sphere.origin - ray.origin };
-					normal.Normalize();
-					hitRecord.normal = normal;
-					hitRecord.origin = ray.origin + (((-B - sqrtf(discriminant)) / 2 * A) * ray.direction);
+					hitRecord.origin = ray.origin + (((-B - sqrt(discriminant)) / (2.f * A)) * ray.direction);
+					hitRecord.normal = (hitRecord.origin + hitRecord.t * ray.direction) - sphere.origin;
 					hitRecord.t = t0;
 				}
 				else if (t1 > 0)
 				{
 					hitRecord.didHit = true;
 					hitRecord.materialIndex = sphere.materialIndex;
-					Vector3 normal{ sphere.origin - ray.origin };
-					normal.Normalize();
-					hitRecord.normal = normal;
-					hitRecord.origin = ray.origin + (((-B - sqrtf(discriminant)) / 2 * A) * ray.direction);
+					hitRecord.origin = ray.origin + (((-B - sqrt(discriminant)) / (2.f * A)) * ray.direction);
+					hitRecord.normal = (hitRecord.origin + hitRecord.t * ray.direction) - sphere.origin;
 					hitRecord.t = t1;
 				}
 			}

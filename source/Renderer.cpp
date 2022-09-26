@@ -32,7 +32,7 @@ void Renderer::Render(Scene* pScene) const
 		for (int py{}; py < m_Height; ++py)
 		{
 			Vector3 rayDirection{};
-			rayDirection.x = (2 * (px + 0.5f) / m_Width - 1) * (m_Width / m_Height);
+			rayDirection.x = (2 * (px + 0.5f) / float(m_Width) - 1) * (float(m_Width) / m_Height);
 			rayDirection.y = 1 - 2 * (py + 0.5f) / m_Height;
 			rayDirection.z = 1.f;
 
