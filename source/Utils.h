@@ -25,7 +25,7 @@ namespace dae
 
 			if (discriminant > 0)
 			{
-				if (t0 > 0 && t0 < t1)
+				if (t0 > ray.min && t0 < ray.max)
 				{
 					hitRecord.didHit = true;
 					hitRecord.materialIndex = sphere.materialIndex;
@@ -33,7 +33,7 @@ namespace dae
 					hitRecord.normal = (hitRecord.origin + hitRecord.t * ray.direction) - sphere.origin;
 					hitRecord.t = t0;
 				}
-				else if (t1 > 0)
+				else if (t1 > ray.min && t1 < ray.max)
 				{
 					hitRecord.didHit = true;
 					hitRecord.materialIndex = sphere.materialIndex;

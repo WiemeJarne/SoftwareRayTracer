@@ -27,7 +27,7 @@ void Renderer::Render(Scene* pScene) const
 	auto& materials = pScene->GetMaterials();
 	auto& lights = pScene->GetLights();
 
-	const float fov{ tan(camera.fovAngle / 2.f) };
+	const float fov{ tan(camera.fovAngle*TO_RADIANS / 2.f) };
 
 	for (int px{}; px < m_Width; ++px)
 	{
@@ -43,6 +43,8 @@ void Renderer::Render(Scene* pScene) const
 			rayDirection.Normalize();
 
 			const Matrix cameraToWorld{ camera.CalculateCameraToWorld()};
+
+			rayDirection = cameraToWorld.TransformVector(rayDirection);
 
 			Ray ViewRay{ camera.origin, rayDirection };
 

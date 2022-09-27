@@ -6,6 +6,8 @@
 #include "Math.h"
 #include "Timer.h"
 
+#include <iostream>
+
 namespace dae
 {
 	struct Camera
@@ -22,7 +24,7 @@ namespace dae
 		Vector3 origin{};
 		float fovAngle{90.f};
 
-		Vector3 forward{Vector3::UnitZ};
+		Vector3 forward{ Vector3::UnitZ };
 		Vector3 up{Vector3::UnitY};
 		Vector3 right{Vector3::UnitX};
 
@@ -44,23 +46,78 @@ namespace dae
 				{forward, 0},
 				{origin, 1}
 			};
-			return {};
 		}
 
 		void Update(Timer* pTimer)
 		{
 			const float deltaTime = pTimer->GetElapsed();
+			const float cameraMovementSpeed{ 1.f };
+			const float cameraRoatationSpeed{ 0.1f };
 
 			//Keyboard Input
 			const uint8_t* pKeyboardState = SDL_GetKeyboardState(nullptr);
 
+			if (pKeyboardState[SDL_SCANCODE_W])
+			{
+				origin.z += cameraMovementSpeed * pTimer->GetElapsed();
+			}
+
+			if (pKeyboardState[SDL_SCANCODE_S])
+			{
+				origin.z -= cameraMovementSpeed * pTimer->GetElapsed();
+			}
+
+			if (pKeyboardState[SDL_SCANCODE_D])
+			{
+				origin.x += cameraMovementSpeed * pTimer->GetElapsed();
+			}
+
+			if (pKeyboardState[SDL_SCANCODE_A])
+			{
+				origin.x -= cameraMovementSpeed * pTimer->GetElapsed();
+			}
 
 			//Mouse Input
 			int mouseX{}, mouseY{};
 			const uint32_t mouseState = SDL_GetRelativeMouseState(&mouseX, &mouseY);
 
-			//todo: W2
-			//assert(false && "Not Implemented Yet");
+			if (mouseState == SDL_BUTTON_LEFT)
+			{				
+				if (mouseY > 0)
+				{
+					origin.z -= cameraMovementSpeed * pTimer->GetElapsed();
+				}
+
+				if (mouseY < 0)
+				{
+					origin.z += cameraMovementSpeed * pTimer->GetElapsed();
+				}
+
+				if (mouseX > 0)
+				{
+					Matrix rotationMatrix{ Matrix::CreateRotationY( cameraRoatationSpeed * pTimer->GetElapsed()) };
+					forward = rotationMatrix.TransformVector(forward);
+				}
+				
+				if (mouseX < 0)
+				{
+					Matrix rotationMatrix{ Matrix::CreateRotationY( -cameraRoatationSpeed * pTimer->GetElapsed()) };
+					forward = rotationMatrix.TransformVector(forward);
+				}
+
+				if (mouseState == SDL_BUTTON_RIGHT)
+				{
+					if (mouseY > 0)
+					{
+						origin.y -= cameraMovementSpeed * pTimer->GetElapsed();
+					}
+
+					if (mouseY < 0)
+					{
+						origin.y += cameraMovementSpeed * pTimer->GetElapsed();
+					}
+				}
+			}
 		}
 	};
 }
