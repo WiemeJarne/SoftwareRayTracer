@@ -27,27 +27,30 @@ void Renderer::Render(Scene* pScene) const
 	auto& materials = pScene->GetMaterials();
 	auto& lights = pScene->GetLights();
 
+	const float fov{ tan(camera.fovAngle / 2.f) };
+
 	for (int px{}; px < m_Width; ++px)
 	{
 		for (int py{}; py < m_Height; ++py)
 		{
+			const float aspectRatio{ static_cast<float>(m_Width) / m_Height };
+
 			Vector3 rayDirection{};
-			rayDirection.x = (2 * (px + 0.5f) / float(m_Width) - 1) * (float(m_Width) / m_Height);
-			rayDirection.y = 1 - 2 * (py + 0.5f) / m_Height;
+			rayDirection.x = (2 * (px + 0.5f) / float(m_Width) - 1) * aspectRatio * fov;
+			rayDirection.y = ( 1 - 2 * (py + 0.5f) / m_Height ) * fov;
 			rayDirection.z = 1.f;
 
 			rayDirection.Normalize();
 
-			Ray ViewRay{ {0.f, 0.f, 0.f}, rayDirection };
+			const Matrix cameraToWorld{ camera.CalculateCameraToWorld()};
 
-			ColorRGB finalColor{};
+			Ray ViewRay{ camera.origin, rayDirection };
 
 			HitRecord closestHit{};
 
-			//Sphere testSphere{ {0.f, 0.f, 100.f}, 50.f, 0 };
-			//GeometryUtils::HitTest_Sphere(testSphere, ViewRay, closestHit);
-
 			pScene->GetClosestHit(ViewRay, closestHit);
+
+			ColorRGB finalColor{};
 
 			if (closestHit.didHit)
 			{

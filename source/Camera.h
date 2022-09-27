@@ -35,7 +35,15 @@ namespace dae
 		Matrix CalculateCameraToWorld()
 		{
 			//todo: W2
-			assert(false && "Not Implemented Yet");
+			Vector3 right{ Vector3::Cross(up, forward).Normalized() };
+			Vector3 up{ Vector3::Cross(forward, right).Normalized() };
+			return Matrix
+			{
+				{right, 0},
+				{up, 0},
+				{forward, 0},
+				{origin, 1}
+			};
 			return {};
 		}
 
