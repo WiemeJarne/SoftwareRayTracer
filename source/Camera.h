@@ -51,7 +51,7 @@ namespace dae
 		void Update(Timer* pTimer)
 		{
 			const float deltaTime = pTimer->GetElapsed();
-			const float cameraMovementSpeed{ 1.f };
+			const float cameraMovementSpeed{ 10.f };
 			const float cameraRoatationSpeed{ 0.1f };
 
 			//Keyboard Input
