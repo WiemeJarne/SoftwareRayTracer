@@ -105,17 +105,18 @@ namespace dae
 					forward = rotationMatrix.TransformVector(forward);
 				}
 
-				if (mouseState == SDL_BUTTON_RIGHT)
-				{
-					if (mouseY > 0)
-					{
-						origin.y -= cameraMovementSpeed * pTimer->GetElapsed();
-					}
+			}
 
-					if (mouseY < 0)
-					{
-						origin.y += cameraMovementSpeed * pTimer->GetElapsed();
-					}
+			if ((mouseState & SDL_BUTTON_RMASK) && (mouseState & SDL_BUTTON_LMASK))
+			{
+				if (mouseY > 0)
+				{
+					origin.y -= cameraMovementSpeed * pTimer->GetElapsed();
+				}
+
+				if (mouseY < 0)
+				{
+					origin.y += cameraMovementSpeed * pTimer->GetElapsed();
 				}
 			}
 		}
