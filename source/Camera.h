@@ -51,8 +51,8 @@ namespace dae
 		void Update(Timer* pTimer)
 		{
 			const float deltaTime = pTimer->GetElapsed();
-			const float cameraMovementSpeed{ 10.f };
-			const float cameraRoatationSpeed{ 0.1f };
+			const float cameraMovementSpeed{ 20.f };
+			const float cameraRoatationSpeed{ 30.f*TO_RADIANS };
 
 			//Keyboard Input
 			const uint8_t* pKeyboardState = SDL_GetKeyboardState(nullptr);
@@ -81,7 +81,7 @@ namespace dae
 			int mouseX{}, mouseY{};
 			const uint32_t mouseState = SDL_GetRelativeMouseState(&mouseX, &mouseY);
 
-			if (mouseState == SDL_BUTTON_LEFT)
+			if (mouseState & SDL_BUTTON_RMASK)
 			{				
 				if (mouseY > 0)
 				{
