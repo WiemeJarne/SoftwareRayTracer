@@ -81,7 +81,7 @@ namespace dae
 			int mouseX{}, mouseY{};
 			const uint32_t mouseState = SDL_GetRelativeMouseState(&mouseX, &mouseY);
 
-			if (mouseState & SDL_BUTTON_RMASK)
+			if (mouseState & SDL_BUTTON_LMASK)
 			{				
 				if (mouseY > 0)
 				{
@@ -104,7 +104,6 @@ namespace dae
 					Matrix rotationMatrix{ Matrix::CreateRotationY( -cameraRoatationSpeed * pTimer->GetElapsed()) };
 					forward = rotationMatrix.TransformVector(forward);
 				}
-
 			}
 
 			if ((mouseState & SDL_BUTTON_RMASK) && (mouseState & SDL_BUTTON_LMASK))

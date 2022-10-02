@@ -27,22 +27,22 @@ void Renderer::Render(Scene* pScene) const
 	auto& materials = pScene->GetMaterials();
 	auto& lights = pScene->GetLights();
 
+	const Matrix cameraToWorld{ camera.CalculateCameraToWorld() };
+
+	const float aspectRatio{ static_cast<float>(m_Width) / m_Height };
+
 	const float fov{ tan(camera.fovAngle*TO_RADIANS / 2.f) };
 
 	for (int px{}; px < m_Width; ++px)
 	{
 		for (int py{}; py < m_Height; ++py)
 		{
-			const float aspectRatio{ static_cast<float>(m_Width) / m_Height };
-
 			Vector3 rayDirection{};
 			rayDirection.x = (2 * (px + 0.5f) / float(m_Width) - 1) * aspectRatio * fov;
 			rayDirection.y = ( 1 - 2 * (py + 0.5f) / m_Height ) * fov;
 			rayDirection.z = 1.f;
 
 			rayDirection.Normalize();
-
-			const Matrix cameraToWorld{ camera.CalculateCameraToWorld()};
 
 			rayDirection = cameraToWorld.TransformVector(rayDirection);
 
