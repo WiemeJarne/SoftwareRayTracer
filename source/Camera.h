@@ -81,8 +81,8 @@ namespace dae
 			int mouseX{}, mouseY{};
 			const uint32_t mouseState = SDL_GetRelativeMouseState(&mouseX, &mouseY);
 
-			if (mouseState & SDL_BUTTON_LMASK)
-			{				
+			if (mouseState & SDL_BUTTON_LMASK && !(mouseState & SDL_BUTTON_RMASK))
+			{
 				if (mouseY > 0)
 				{
 					origin.z -= cameraMovementSpeed * pTimer->GetElapsed();
@@ -95,15 +95,44 @@ namespace dae
 
 				if (mouseX > 0)
 				{
-					Matrix rotationMatrix{ Matrix::CreateRotationY( cameraRoatationSpeed * pTimer->GetElapsed()) };
-					forward = rotationMatrix.TransformVector(forward);
+					totalYaw += cameraRoatationSpeed * pTimer->GetElapsed();
 				}
 				
 				if (mouseX < 0)
 				{
-					Matrix rotationMatrix{ Matrix::CreateRotationY( -cameraRoatationSpeed * pTimer->GetElapsed()) };
-					forward = rotationMatrix.TransformVector(forward);
+					totalYaw -= cameraRoatationSpeed * pTimer->GetElapsed();
 				}
+
+				Matrix result{ Matrix::CreateRotation(0, totalYaw, 0) };
+				forward = result.TransformVector(Vector3::UnitZ);
+				forward.Normalize();
+			}
+			
+			if (mouseState & SDL_BUTTON_RMASK && !(mouseState & SDL_BUTTON_LMASK))
+			{
+				if (mouseX > 0)
+				{
+					totalYaw += cameraRoatationSpeed * pTimer->GetElapsed();
+				}
+
+				if (mouseX < 0)
+				{
+					totalYaw -= cameraRoatationSpeed * pTimer->GetElapsed();
+				}
+
+				if (mouseY > 0)
+				{
+					totalPitch -= cameraRoatationSpeed * pTimer->GetElapsed();
+				}
+
+				if (mouseY < 0)
+				{
+					totalPitch += cameraRoatationSpeed * pTimer->GetElapsed();
+				}
+
+				Matrix result{ Matrix::CreateRotation(totalPitch, totalYaw, 0) };
+				forward = result.TransformVector(Vector3::UnitZ);
+				forward.Normalize();
 			}
 
 			if ((mouseState & SDL_BUTTON_RMASK) && (mouseState & SDL_BUTTON_LMASK))
