@@ -81,71 +81,81 @@ namespace dae
 			int mouseX{}, mouseY{};
 			const uint32_t mouseState = SDL_GetRelativeMouseState(&mouseX, &mouseY);
 
-			if (mouseState & SDL_BUTTON_LMASK && !(mouseState & SDL_BUTTON_RMASK))
+			const float elapsedSec{ pTimer->GetElapsed() };
+
+			if ((mouseState & SDL_BUTTON_RMASK) && (mouseState & SDL_BUTTON_LMASK))
 			{
 				if (mouseY > 0)
 				{
-					origin.z -= cameraMovementSpeed * pTimer->GetElapsed();
+					origin.y -= cameraMovementSpeed * elapsedSec;
 				}
 
 				if (mouseY < 0)
 				{
-					origin.z += cameraMovementSpeed * pTimer->GetElapsed();
+					origin.y += cameraMovementSpeed * elapsedSec;
 				}
 
 				if (mouseX > 0)
 				{
-					totalYaw += cameraRoatationSpeed * pTimer->GetElapsed();
+					origin.x += cameraMovementSpeed * elapsedSec;
 				}
-				
+
 				if (mouseX < 0)
 				{
-					totalYaw -= cameraRoatationSpeed * pTimer->GetElapsed();
+					origin.x -= cameraMovementSpeed * elapsedSec;
+				}
+			}
+			else if (mouseState & SDL_BUTTON_LMASK)
+			{
+				if (mouseY > 0)
+				{
+					origin.z -= cameraMovementSpeed * elapsedSec;
+				}
+
+				if (mouseY < 0)
+				{
+					origin.z += cameraMovementSpeed * elapsedSec;
+				}
+		
+				if (mouseX > 0)
+				{
+					totalYaw += cameraRoatationSpeed * elapsedSec;
+				}
+
+				if (mouseX < 0)
+				{
+					totalYaw -= cameraRoatationSpeed * elapsedSec;
 				}
 
 				Matrix result{ Matrix::CreateRotation(0, totalYaw, 0) };
 				forward = result.TransformVector(Vector3::UnitZ);
 				forward.Normalize();
 			}
-			
-			if (mouseState & SDL_BUTTON_RMASK && !(mouseState & SDL_BUTTON_LMASK))
+			else if (mouseState & SDL_BUTTON_RMASK)
 			{
 				if (mouseX > 0)
 				{
-					totalYaw += cameraRoatationSpeed * pTimer->GetElapsed();
+					totalYaw += cameraRoatationSpeed * elapsedSec;
 				}
 
 				if (mouseX < 0)
 				{
-					totalYaw -= cameraRoatationSpeed * pTimer->GetElapsed();
+					totalYaw -= cameraRoatationSpeed * elapsedSec;
 				}
 
 				if (mouseY > 0)
 				{
-					totalPitch -= cameraRoatationSpeed * pTimer->GetElapsed();
+					totalPitch -= cameraRoatationSpeed * elapsedSec;
 				}
 
 				if (mouseY < 0)
 				{
-					totalPitch += cameraRoatationSpeed * pTimer->GetElapsed();
+					totalPitch += cameraRoatationSpeed * elapsedSec;
 				}
 
 				Matrix result{ Matrix::CreateRotation(totalPitch, totalYaw, 0) };
 				forward = result.TransformVector(Vector3::UnitZ);
 				forward.Normalize();
-			}
-
-			if ((mouseState & SDL_BUTTON_RMASK) && (mouseState & SDL_BUTTON_LMASK))
-			{
-				if (mouseY > 0)
-				{
-					origin.y -= cameraMovementSpeed * pTimer->GetElapsed();
-				}
-
-				if (mouseY < 0)
-				{
-					origin.y += cameraMovementSpeed * pTimer->GetElapsed();
-				}
 			}
 		}
 	};

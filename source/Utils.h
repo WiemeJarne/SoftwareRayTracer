@@ -23,7 +23,7 @@ namespace dae
 			const float t0{ (-B - sqrt(discriminant)) / (2.f * A) };
 			const float t1{ (-B + sqrt(discriminant)) / (2.f * A) };
 
-			if (discriminant > 0)
+			if (discriminant > 0 && hitRecord.t > t0 && hitRecord.t > t1)
 			{
 				if (t0 > ray.min && t0 < ray.max)
 				{
@@ -59,7 +59,7 @@ namespace dae
 			//todo W1
 			float t = Vector3::Dot(plane.origin - ray.origin, plane.normal) / Vector3::Dot(ray.direction, plane.normal);
 
-			if (t > 0)
+			if (t > 0 && hitRecord.t > t)
 			{
 				hitRecord.didHit = true;
 				hitRecord.materialIndex = plane.materialIndex;

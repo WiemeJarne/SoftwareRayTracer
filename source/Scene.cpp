@@ -29,29 +29,17 @@ namespace dae {
 	void dae::Scene::GetClosestHit(const Ray& ray, HitRecord& closestHit) const
 	{
 		//todo W1
-		HitRecord currentClosestHit{};
-
-		for (int index{}; index < m_SphereGeometries.size(); ++index)
+		const size_t amountOfSpheres{ m_SphereGeometries.size() };
+		for (size_t index{}; index < amountOfSpheres; ++index)
 		{
 			GeometryUtils::HitTest_Sphere(m_SphereGeometries[index], ray, closestHit);
-
-			if (closestHit.didHit && closestHit.t < currentClosestHit.t)
-			{
-				currentClosestHit = closestHit;
-			}
 		}
 
-		for (int index{}; index < m_PlaneGeometries.size(); ++index)
+		const size_t amountOfPlanes{ m_PlaneGeometries.size() };
+		for (size_t index{}; index < amountOfPlanes; ++index)
 		{
 			GeometryUtils::HitTest_Plane(m_PlaneGeometries[index], ray, closestHit);
-
-			if (closestHit.didHit && closestHit.t < currentClosestHit.t)
-			{
-				currentClosestHit = closestHit;
-			}
 		}
-
-		closestHit = currentClosestHit;
 	}
 
 	bool Scene::DoesHit(const Ray& ray) const
