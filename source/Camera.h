@@ -50,38 +50,36 @@ namespace dae
 
 		void Update(Timer* pTimer)
 		{
-			const float deltaTime = pTimer->GetElapsed();
 			const float cameraMovementSpeed{ 20.f };
-			const float cameraRoatationSpeed{ 30.f*TO_RADIANS };
+			const float cameraRoatationSpeed{ 180.f*TO_RADIANS };
+			const float elapsedSec{ pTimer->GetElapsed() };
 
 			//Keyboard Input
 			const uint8_t* pKeyboardState = SDL_GetKeyboardState(nullptr);
 
 			if (pKeyboardState[SDL_SCANCODE_W])
 			{
-				origin.z += cameraMovementSpeed * pTimer->GetElapsed();
+				origin.z += cameraMovementSpeed * elapsedSec;
 			}
 
 			if (pKeyboardState[SDL_SCANCODE_S])
 			{
-				origin.z -= cameraMovementSpeed * pTimer->GetElapsed();
+				origin.z -= cameraMovementSpeed * elapsedSec;
 			}
 
 			if (pKeyboardState[SDL_SCANCODE_D])
 			{
-				origin.x += cameraMovementSpeed * pTimer->GetElapsed();
+				origin.x += cameraMovementSpeed * elapsedSec;
 			}
 
 			if (pKeyboardState[SDL_SCANCODE_A])
 			{
-				origin.x -= cameraMovementSpeed * pTimer->GetElapsed();
+				origin.x -= cameraMovementSpeed * elapsedSec;
 			}
 
 			//Mouse Input
 			int mouseX{}, mouseY{};
 			const uint32_t mouseState = SDL_GetRelativeMouseState(&mouseX, &mouseY);
-
-			const float elapsedSec{ pTimer->GetElapsed() };
 
 			if ((mouseState & SDL_BUTTON_RMASK) && (mouseState & SDL_BUTTON_LMASK))
 			{

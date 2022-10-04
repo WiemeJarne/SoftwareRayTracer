@@ -20,24 +20,30 @@ namespace dae
 
 			const float discriminant{ B * B - 4 * A * C };
 
-			const float t0{ (-B - sqrt(discriminant)) / (2.f * A) };
-			const float t1{ (-B + sqrt(discriminant)) / (2.f * A) };
-
-			if (discriminant > 0 && hitRecord.t > t0 && hitRecord.t > t1)
+			if (discriminant > 0)
 			{
+				const float sqrtDiscriminant{ sqrt(discriminant) };
+
+				const float t0{ (-B - sqrtDiscriminant) / (2.f * A) };
+				const float t1{ (-B + sqrtDiscriminant) / (2.f * A) };
+
 				if (t0 > ray.min && t0 < ray.max)
 				{
+					if (ignoreHitRecord) return true;
+
 					hitRecord.didHit = true;
 					hitRecord.materialIndex = sphere.materialIndex;
-					hitRecord.origin = ray.origin + (((-B - sqrt(discriminant)) / (2.f * A)) * ray.direction);
+					hitRecord.origin = ray.origin + (t0 * ray.direction);
 					hitRecord.normal = (hitRecord.origin + hitRecord.t * ray.direction) - sphere.origin;
 					hitRecord.t = t0;
 				}
 				else if (t1 > ray.min && t1 < ray.max)
 				{
+					if (ignoreHitRecord) return true;
+
 					hitRecord.didHit = true;
 					hitRecord.materialIndex = sphere.materialIndex;
-					hitRecord.origin = ray.origin + (((-B - sqrt(discriminant)) / (2.f * A)) * ray.direction);
+					hitRecord.origin = ray.origin + (t1 * ray.direction);
 					hitRecord.normal = (hitRecord.origin + hitRecord.t * ray.direction) - sphere.origin;
 					hitRecord.t = t1;
 				}
@@ -113,8 +119,7 @@ namespace dae
 		inline Vector3 GetDirectionToLight(const Light& light, const Vector3 origin)
 		{
 			//todo W3
-			assert(false && "No Implemented Yet!");
-			return {};
+			return { light.origin - origin };
 		}
 
 		inline ColorRGB GetRadiance(const Light& light, const Vector3& target)

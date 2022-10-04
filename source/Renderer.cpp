@@ -33,6 +33,8 @@ void Renderer::Render(Scene* pScene) const
 
 	const float fov{ tan(camera.fovAngle*TO_RADIANS / 2.f) };
 
+	const size_t amountOfLights{ lights.size() };
+
 	for (int px{}; px < m_Width; ++px)
 	{
 		for (int py{}; py < m_Height; ++py)
@@ -56,7 +58,26 @@ void Renderer::Render(Scene* pScene) const
 
 			if (closestHit.didHit)
 			{
-				finalColor = materials[closestHit.materialIndex]->Shade();
+				for (const Light& light : lights)
+				{
+					Vector3 rayOrigin{ closestHit.origin };
+					rayOrigin.y += 0.0001f;
+					Vector3 directionToLight{ LightUtils::GetDirectionToLight(light, rayOrigin)};
+					const float distanceToLight{ directionToLight.Magnitude() };
+					directionToLight.Normalize();
+
+					Ray lightRay{ rayOrigin, directionToLight };
+					lightRay.max = distanceToLight;
+
+					if (pScene->DoesHit(lightRay))
+					{
+						finalColor = materials[closestHit.materialIndex]->Shade() * 0.5f;
+					}
+					else
+					{
+						finalColor = materials[closestHit.materialIndex]->Shade();
+					}
+				}
 
 				//t value visulazation darker = smaller t
 				//const float scaled_t = closestHit.t / 500.f;
