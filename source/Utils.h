@@ -22,7 +22,7 @@ namespace dae
 
 			if (discriminant > 0)
 			{
-				const float sqrtDiscriminant{ sqrt(discriminant) };
+				const float sqrtDiscriminant{ sqrtf(discriminant) };
 
 				const float t0{ (-B - sqrtDiscriminant) / (2.f * A) };
 				const float t1{ (-B + sqrtDiscriminant) / (2.f * A) };
@@ -34,8 +34,10 @@ namespace dae
 					hitRecord.didHit = true;
 					hitRecord.materialIndex = sphere.materialIndex;
 					hitRecord.origin = ray.origin + (t0 * ray.direction);
-					hitRecord.normal = (hitRecord.origin + hitRecord.t * ray.direction) - sphere.origin;
+					hitRecord.normal = (hitRecord.origin - sphere.origin).Normalized();
 					hitRecord.t = t0;
+
+					return true;
 				}
 				else if (t1 > ray.min && t1 < ray.max)
 				{
@@ -44,8 +46,10 @@ namespace dae
 					hitRecord.didHit = true;
 					hitRecord.materialIndex = sphere.materialIndex;
 					hitRecord.origin = ray.origin + (t1 * ray.direction);
-					hitRecord.normal = (hitRecord.origin + hitRecord.t * ray.direction) - sphere.origin;
+					hitRecord.normal = (hitRecord.origin - sphere.origin).Normalized();
 					hitRecord.t = t1;
+
+					return true;
 				}
 			}
 			
@@ -65,13 +69,16 @@ namespace dae
 			//todo W1
 			float t = Vector3::Dot(plane.origin - ray.origin, plane.normal) / Vector3::Dot(ray.direction, plane.normal);
 
-			if (t > 0 && hitRecord.t > t)
+			if (t >= ray.min && t <= ray.max)
 			{
+				if (ignoreHitRecord) return true;
+
 				hitRecord.didHit = true;
 				hitRecord.materialIndex = plane.materialIndex;
 				hitRecord.normal = plane.normal;
 				hitRecord.origin = ray.origin + t * ray.direction;
 				hitRecord.t = t;
+				return true;
 			}
 			return false;
 		}

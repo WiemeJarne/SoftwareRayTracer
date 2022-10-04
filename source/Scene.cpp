@@ -29,27 +29,30 @@ namespace dae {
 	void dae::Scene::GetClosestHit(const Ray& ray, HitRecord& closestHit) const
 	{
 		//todo W1
-		HitRecord currentClosestHit{};
+		HitRecord tempClosestHit{};
 
 		const size_t amountOfSpheres{ m_SphereGeometries.size() };
 		for (size_t index{}; index < amountOfSpheres; ++index)
 		{
-			GeometryUtils::HitTest_Sphere(m_SphereGeometries[index], ray, closestHit);
-
-			if (closestHit.t > currentClosestHit.t)
+			if (GeometryUtils::HitTest_Sphere(m_SphereGeometries[index], ray, tempClosestHit))
 			{
-				currentClosestHit = closestHit;
+				if (tempClosestHit.t < closestHit.t)
+				{
+					closestHit = tempClosestHit;
+				}
 			}
 		}
 
 		const size_t amountOfPlanes{ m_PlaneGeometries.size() };
 		for (size_t index{}; index < amountOfPlanes; ++index)
 		{
-			GeometryUtils::HitTest_Plane(m_PlaneGeometries[index], ray, closestHit);
-
-			if (closestHit.t > currentClosestHit.t)
+			if (GeometryUtils::HitTest_Plane(m_PlaneGeometries[index], ray, tempClosestHit))
 			{
-				currentClosestHit = closestHit;
+
+				if (tempClosestHit.t < closestHit.t)
+				{
+					closestHit = tempClosestHit;
+				}
 			}
 		}
 	}
@@ -184,7 +187,7 @@ namespace dae {
 
 		//Plane
 		AddPlane({ -5.f, 0.f, 0.f }, { 1.f, 0.f, 0.f }, matId_Solid_Green);
-		AddPlane({ 5.f, 0.f, 0.f }, { 1.f, 0.f, 0.f }, matId_Solid_Green);
+		AddPlane({ 5.f, 0.f, 0.f }, { -1.f, 0.f, 0.f }, matId_Solid_Green);
 		AddPlane({ 0.f, 0.f, 0.f }, { 0.f, 1.f, 0.f }, matId_Solid_Yellow);
 		AddPlane({ 0.f, 10.f, 0.f }, { 0.f, -1.f, 0.f }, matId_Solid_Yellow);
 		AddPlane({ 0.f, 0.f, 10.f }, { 0.f, 0.f, -1.f }, matId_Solid_Magenta);

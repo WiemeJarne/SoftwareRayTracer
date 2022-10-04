@@ -22,7 +22,9 @@ namespace dae
 
 
 		Vector3 origin{};
-		float fovAngle{90.f};
+		float fovAngle{ 90.f };
+		const float maxFovAngle{ 179.f };
+		const float minFovAngle{ 1.f };
 
 		Vector3 forward{ Vector3::UnitZ };
 		Vector3 up{Vector3::UnitY};
@@ -75,6 +77,17 @@ namespace dae
 			if (pKeyboardState[SDL_SCANCODE_A])
 			{
 				origin.x -= cameraMovementSpeed * elapsedSec;
+			}
+
+			//change fov
+			if (pKeyboardState[SDL_SCANCODE_UP] && fovAngle < maxFovAngle)
+			{
+				fovAngle -= 1.f;
+			}
+
+			if (pKeyboardState[SDL_SCANCODE_DOWN] && fovAngle > minFovAngle)
+			{
+				fovAngle += 1.f;
 			}
 
 			//Mouse Input

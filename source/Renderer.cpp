@@ -31,7 +31,7 @@ void Renderer::Render(Scene* pScene) const
 
 	const float aspectRatio{ static_cast<float>(m_Width) / m_Height };
 
-	const float fov{ tan(camera.fovAngle*TO_RADIANS / 2.f) };
+	const float fov{ tan(camera.fovAngle * TO_RADIANS / 2.f) };
 
 	const size_t amountOfLights{ lights.size() };
 
@@ -58,24 +58,23 @@ void Renderer::Render(Scene* pScene) const
 
 			if (closestHit.didHit)
 			{
+				finalColor = materials[closestHit.materialIndex]->Shade();
+
 				for (const Light& light : lights)
 				{
 					Vector3 rayOrigin{ closestHit.origin };
-					rayOrigin.y += 0.0001f;
+					rayOrigin += closestHit.normal * 0.0001f;
 					Vector3 directionToLight{ LightUtils::GetDirectionToLight(light, rayOrigin)};
-					const float distanceToLight{ directionToLight.Magnitude() };
-					directionToLight.Normalize();
+					const float distanceToLight{ directionToLight.Normalize()};
 
-					Ray lightRay{ rayOrigin, directionToLight };
+					Ray lightRay{};
+					lightRay.origin = rayOrigin;
+					lightRay.direction = directionToLight;
 					lightRay.max = distanceToLight;
 
 					if (pScene->DoesHit(lightRay))
 					{
-						finalColor = materials[closestHit.materialIndex]->Shade() * 0.5f;
-					}
-					else
-					{
-						finalColor = materials[closestHit.materialIndex]->Shade();
+						finalColor *= 0.5f;
 					}
 				}
 
