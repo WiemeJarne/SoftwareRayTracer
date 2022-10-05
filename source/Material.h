@@ -114,9 +114,9 @@ namespace dae
 			const ColorRGB f0 = (m_Metalness == 0) ? ColorRGB{0.04f, 0.04f, 0.04f} : m_Albedo;
 			const Vector3 halfVector{ (v + l) / (v + l).Magnitude() };
 			const ColorRGB fersnel{ BRDF::FresnelFunction_Schlick(halfVector, v, f0) };
-			const float normalDistrution{ BRDF::NormalDistribution_GGX(normal, halfVector, m_Roughness) };
+			const float normalDistribution{ BRDF::NormalDistribution_GGX(normal, halfVector, m_Roughness) };
 			const float geometry{ BRDF::GeometryFunction_Smith(normal, v, l, m_Roughness) };
-			const ColorRGB fng{ fersnel * normalDistrution * geometry };
+			const ColorRGB fng{ fersnel * normalDistribution * geometry };
 			const float denominator{ 4 * (Vector3::Dot(v, normal) * Vector3::Dot(l, normal)) };
 			ColorRGB specular{};
 			specular.r = fng.r / denominator;
