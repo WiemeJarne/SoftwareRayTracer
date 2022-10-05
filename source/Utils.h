@@ -25,7 +25,6 @@ namespace dae
 				const float sqrtDiscriminant{ sqrtf(discriminant) };
 
 				const float t0{ (-B - sqrtDiscriminant) / (2.f * A) };
-				const float t1{ (-B + sqrtDiscriminant) / (2.f * A) };
 
 				if (t0 > ray.min && t0 < ray.max)
 				{
@@ -33,19 +32,22 @@ namespace dae
 
 					hitRecord.didHit = true;
 					hitRecord.materialIndex = sphere.materialIndex;
-					hitRecord.origin = ray.origin + (t0 * ray.direction);
+					hitRecord.origin = ray.origin + t0 * ray.direction;
 					hitRecord.normal = (hitRecord.origin - sphere.origin).Normalized();
 					hitRecord.t = t0;
 
 					return true;
 				}
-				else if (t1 > ray.min && t1 < ray.max)
+				
+				const float t1{ (-B + sqrtDiscriminant) / (2.f * A) };
+
+				if (t1 > ray.min && t1 < ray.max)
 				{
 					if (ignoreHitRecord) return true;
 
 					hitRecord.didHit = true;
 					hitRecord.materialIndex = sphere.materialIndex;
-					hitRecord.origin = ray.origin + (t1 * ray.direction);
+					hitRecord.origin = ray.origin + t1 * ray.direction;
 					hitRecord.normal = (hitRecord.origin - sphere.origin).Normalized();
 					hitRecord.t = t1;
 
@@ -67,7 +69,7 @@ namespace dae
 		inline bool HitTest_Plane(const Plane& plane, const Ray& ray, HitRecord& hitRecord, bool ignoreHitRecord = false)
 		{
 			//todo W1
-			float t = Vector3::Dot(plane.origin - ray.origin, plane.normal) / Vector3::Dot(ray.direction, plane.normal);
+			const float t = Vector3::Dot(plane.origin - ray.origin, plane.normal) / Vector3::Dot(ray.direction, plane.normal);
 
 			if (t >= ray.min && t <= ray.max)
 			{
@@ -132,8 +134,19 @@ namespace dae
 		inline ColorRGB GetRadiance(const Light& light, const Vector3& target)
 		{
 			//todo W3
-			assert(false && "No Implemented Yet!");
-			return {};
+			if(light.type == LightType::Point)
+			{
+				const Vector3 targetToLight{ light.origin - target };
+				const float irradiance{ light.intensity / targetToLight.SqrMagnitude() };
+				return{ light.color * irradiance };
+			}
+
+			if(light.type == LightType::Directional)
+			{
+				return{ light.color * light.intensity };
+			}
+
+			return { };
 		}
 	}
 

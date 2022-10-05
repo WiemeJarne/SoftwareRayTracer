@@ -53,7 +53,7 @@ namespace dae
 		void Update(Timer* pTimer)
 		{
 			const float cameraMovementSpeed{ 20.f };
-			const float cameraRoatationSpeed{ 180.f*TO_RADIANS };
+			const float cameraRotationSpeed{ 180.f*TO_RADIANS };
 			const float elapsedSec{ pTimer->GetElapsed() };
 
 			//Keyboard Input
@@ -61,31 +61,31 @@ namespace dae
 
 			if (pKeyboardState[SDL_SCANCODE_W])
 			{
-				origin.z += cameraMovementSpeed * elapsedSec;
+				origin += forward * cameraMovementSpeed * elapsedSec;
 			}
 
 			if (pKeyboardState[SDL_SCANCODE_S])
 			{
-				origin.z -= cameraMovementSpeed * elapsedSec;
+				origin += -forward * cameraMovementSpeed * elapsedSec;
 			}
 
 			if (pKeyboardState[SDL_SCANCODE_D])
 			{
-				origin.x += cameraMovementSpeed * elapsedSec;
+				origin += right * cameraMovementSpeed * elapsedSec;
 			}
 
 			if (pKeyboardState[SDL_SCANCODE_A])
 			{
-				origin.x -= cameraMovementSpeed * elapsedSec;
+				origin += -right * cameraMovementSpeed * elapsedSec;
 			}
 
 			//change fov
-			if (pKeyboardState[SDL_SCANCODE_UP] && fovAngle < maxFovAngle)
+			if (pKeyboardState[SDL_SCANCODE_UP] && fovAngle > minFovAngle)
 			{
 				fovAngle -= 1.f;
 			}
 
-			if (pKeyboardState[SDL_SCANCODE_DOWN] && fovAngle > minFovAngle)
+			if (pKeyboardState[SDL_SCANCODE_DOWN] && fovAngle < maxFovAngle)
 			{
 				fovAngle += 1.f;
 			}
@@ -98,47 +98,47 @@ namespace dae
 			{
 				if (mouseY > 0)
 				{
-					origin.y -= cameraMovementSpeed * elapsedSec;
+					origin += -up * cameraMovementSpeed * elapsedSec;
 				}
 
 				if (mouseY < 0)
 				{
-					origin.y += cameraMovementSpeed * elapsedSec;
+					origin += up * cameraMovementSpeed * elapsedSec;
 				}
 
 				if (mouseX > 0)
 				{
-					origin.x += cameraMovementSpeed * elapsedSec;
+					origin += right * cameraMovementSpeed * elapsedSec;
 				}
 
 				if (mouseX < 0)
 				{
-					origin.x -= cameraMovementSpeed * elapsedSec;
+					origin += -right * cameraMovementSpeed * elapsedSec;
 				}
 			}
 			else if (mouseState & SDL_BUTTON_LMASK)
 			{
 				if (mouseY > 0)
 				{
-					origin.z -= cameraMovementSpeed * elapsedSec;
+					origin += forward.Normalized() * -cameraMovementSpeed * elapsedSec;
 				}
 
 				if (mouseY < 0)
 				{
-					origin.z += cameraMovementSpeed * elapsedSec;
+					origin += forward.Normalized() * cameraMovementSpeed * elapsedSec;
 				}
 		
 				if (mouseX > 0)
 				{
-					totalYaw += cameraRoatationSpeed * elapsedSec;
+					totalYaw += cameraRotationSpeed * elapsedSec;
 				}
 
 				if (mouseX < 0)
 				{
-					totalYaw -= cameraRoatationSpeed * elapsedSec;
+					totalYaw -= cameraRotationSpeed * elapsedSec;
 				}
 
-				Matrix result{ Matrix::CreateRotation(0, totalYaw, 0) };
+				const Matrix result{ Matrix::CreateRotation(totalPitch, totalYaw, 0) };
 				forward = result.TransformVector(Vector3::UnitZ);
 				forward.Normalize();
 			}
@@ -146,25 +146,25 @@ namespace dae
 			{
 				if (mouseX > 0)
 				{
-					totalYaw += cameraRoatationSpeed * elapsedSec;
+					totalYaw += cameraRotationSpeed * elapsedSec;
 				}
 
 				if (mouseX < 0)
 				{
-					totalYaw -= cameraRoatationSpeed * elapsedSec;
+					totalYaw -= cameraRotationSpeed * elapsedSec;
 				}
 
 				if (mouseY > 0)
 				{
-					totalPitch -= cameraRoatationSpeed * elapsedSec;
+					totalPitch -= cameraRotationSpeed * elapsedSec;
 				}
 
 				if (mouseY < 0)
 				{
-					totalPitch += cameraRoatationSpeed * elapsedSec;
+					totalPitch += cameraRotationSpeed * elapsedSec;
 				}
 
-				Matrix result{ Matrix::CreateRotation(totalPitch, totalYaw, 0) };
+				const Matrix result{ Matrix::CreateRotation(totalPitch, totalYaw, 0) };
 				forward = result.TransformVector(Vector3::UnitZ);
 				forward.Normalize();
 			}

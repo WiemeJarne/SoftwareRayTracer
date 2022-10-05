@@ -20,7 +20,7 @@ namespace dae
 		Renderer& operator=(const Renderer&) = delete;
 		Renderer& operator=(Renderer&&) noexcept = delete;
 
-		void Render(Scene* pScene) const;
+		void Render(Scene* pScene);
 		bool SaveBufferToImage() const;
 
 	private:
@@ -31,5 +31,16 @@ namespace dae
 
 		int m_Width{};
 		int m_Height{};
+
+		enum class LightingMode
+		{
+			ObservedArea, //Lambert Cosine Law
+			Radiance, //Incident Radiance
+			BRFD, //Scattering of the light
+			Combined //ObservedArea * Radiance * BRFD
+		};
+
+		LightingMode m_CurrentLightingMode{ LightingMode::Combined };
+		bool m_ShadowsEnabled{ true };
 	};
 }

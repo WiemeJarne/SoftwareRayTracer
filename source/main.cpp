@@ -22,9 +22,6 @@ void ShutDown(SDL_Window* pWindow)
 
 int main(int argc, char* args[])
 {
-	float dotResult{};
-	dotResult = Vector3::Dot(Vector3::UnitX, Vector3::UnitX);
-	std::cout << dotResult;
 	//Unreferenced parameters
 	(void)argc;
 	(void)args;
@@ -49,7 +46,7 @@ int main(int argc, char* args[])
 	const auto pRenderer = new Renderer(pWindow);
 
 	//const auto pScene = new Scene_W1();
-	const auto pScene = new Scene_W2();
+	const auto pScene = new Scene_W3_TestScene();
 	pScene->Initialize();
 
 	//Start loop
