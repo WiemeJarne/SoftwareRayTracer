@@ -20,8 +20,11 @@ namespace dae
 		Renderer& operator=(const Renderer&) = delete;
 		Renderer& operator=(Renderer&&) noexcept = delete;
 
-		void Render(Scene* pScene);
+		void Render(Scene* pScene) const;
 		bool SaveBufferToImage() const;
+		
+		void CycleLightingMode();
+		void ToggleShadows() { m_ShadowsEnabled = !m_ShadowsEnabled; };
 
 	private:
 		SDL_Window* m_pWindow{};

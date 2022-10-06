@@ -21,7 +21,7 @@ Renderer::Renderer(SDL_Window * pWindow) :
 	m_pBufferPixels = static_cast<uint32_t*>(m_pBuffer->pixels);
 }
 
-void Renderer::Render(Scene* pScene)
+void Renderer::Render(Scene* pScene) const
 {
 	Camera& camera = pScene->GetCamera();
 	auto& materials = pScene->GetMaterials();
@@ -67,9 +67,10 @@ void Renderer::Render(Scene* pScene)
 					Vector3 rayOrigin{ closestHit.origin };
 					rayOrigin += closestHit.normal * 0.0001f;
 
-					const Vector3 toLight{ LightUtils::GetDirectionToLight(light, rayOrigin) };
+					Vector3 toLight{ LightUtils::GetDirectionToLight(light, rayOrigin) };
+					const float distanceToLight = toLight.Normalize();
 
-					const float observedArea{ Vector3::Dot(closestHit.normal, toLight.Normalized()) };
+					const float observedArea{ Vector3::Dot(closestHit.normal, toLight) };
 
 					switch (m_CurrentLightingMode)
 					{
@@ -91,7 +92,7 @@ void Renderer::Render(Scene* pScene)
 					case LightingMode::ObservedArea:
 						if (observedArea > 0)
 						{
-							finalColor *= observedArea;
+							finalColor += materials[closestHit.materialIndex]->Shade() * observedArea;
 						}
 						break;
 					}
@@ -99,7 +100,7 @@ void Renderer::Render(Scene* pScene)
 					Ray lightRay{};
 					lightRay.origin = rayOrigin;
 					lightRay.direction = toLight;
-					lightRay.max = toLight.Magnitude();
+					lightRay.max = distanceToLight;
 
 					if(pScene->DoesHit(lightRay) && m_ShadowsEnabled)
 					{
@@ -125,36 +126,28 @@ void Renderer::Render(Scene* pScene)
 	//@END
 	//Update SDL Surface
 	SDL_UpdateWindowSurface(m_pWindow);
-
-	//keyboard input
-	const uint8_t* pKeyboardState = SDL_GetKeyboardState(nullptr);
-
-	if(pKeyboardState[SDL_SCANCODE_F2])
-	{
-		m_ShadowsEnabled = !m_ShadowsEnabled;
-	}
-
-	if(pKeyboardState[SDL_SCANCODE_F3])
-	{
-		switch (m_CurrentLightingMode)
-		{
-		case LightingMode::ObservedArea:
-			m_CurrentLightingMode = LightingMode::Radiance;
-			break;
-		case LightingMode::Radiance:
-			m_CurrentLightingMode = LightingMode::BRFD;
-			break;
-		case LightingMode::BRFD:
-			m_CurrentLightingMode = LightingMode::Combined;
-			break;
-		case LightingMode::Combined:
-			m_CurrentLightingMode = LightingMode::ObservedArea;
-			break;
-		}
-	}
 }
 
 bool Renderer::SaveBufferToImage() const
 {
 	return SDL_SaveBMP(m_pBuffer, "RayTracing_Buffer.bmp");
+}
+
+void Renderer::CycleLightingMode()
+{
+	switch (m_CurrentLightingMode)
+	{
+	case LightingMode::ObservedArea:
+		m_CurrentLightingMode = LightingMode::Radiance;
+		break;
+	case LightingMode::Radiance:
+		m_CurrentLightingMode = LightingMode::BRFD;
+		break;
+	case LightingMode::BRFD:
+		m_CurrentLightingMode = LightingMode::Combined;
+		break;
+	case LightingMode::Combined:
+		m_CurrentLightingMode = LightingMode::ObservedArea;
+		break;
+	}
 }
