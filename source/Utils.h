@@ -136,7 +136,7 @@ namespace dae
 			//todo W3
 			if(light.type == LightType::Point)
 			{
-				const Vector3 targetToLight{ light.origin - target };
+				const Vector3 targetToLight{ GetDirectionToLight(light, target) };
 				const float irradiance{ light.intensity / targetToLight.SqrMagnitude() };
 				return{ light.color * irradiance };
 			}

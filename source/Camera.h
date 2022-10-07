@@ -80,12 +80,12 @@ namespace dae
 			}
 
 			//change fov
-			if (pKeyboardState[SDL_SCANCODE_UP] && fovAngle > minFovAngle)
+			if (pKeyboardState[SDL_SCANCODE_LEFT] && fovAngle > minFovAngle)
 			{
 				fovAngle -= 1.f;
 			}
 
-			if (pKeyboardState[SDL_SCANCODE_DOWN] && fovAngle < maxFovAngle)
+			if (pKeyboardState[SDL_SCANCODE_RIGHT] && fovAngle < maxFovAngle)
 			{
 				fovAngle += 1.f;
 			}

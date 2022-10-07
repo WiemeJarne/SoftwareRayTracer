@@ -72,12 +72,17 @@ void Renderer::Render(Scene* pScene) const
 
 					const float observedArea{ Vector3::Dot(closestHit.normal, toLight) };
 
-					switch (m_CurrentLightingMode)
+					if(observedArea > 0)
+					{
+						finalColor += LightUtils::GetRadiance(light, closestHit.origin) * observedArea;
+					}
+
+					/*switch (m_CurrentLightingMode)
 					{
 					case LightingMode::Combined:
 						if (observedArea > 0)
 						{
-							finalColor += LightUtils::GetRadiance(light, closestHit.origin) * materials[closestHit.materialIndex]->Shade(closestHit, toLight, -rayDirection) * observedArea;
+							finalColor +=  * materials[closestHit.materialIndex]->Shade(closestHit, toLight, -rayDirection) * observedArea;
 						}
 						break;
 
@@ -95,17 +100,17 @@ void Renderer::Render(Scene* pScene) const
 							finalColor += materials[closestHit.materialIndex]->Shade() * observedArea;
 						}
 						break;
-					}
-
+					}*/
+					
 					Ray lightRay{};
 					lightRay.origin = rayOrigin;
 					lightRay.direction = toLight;
 					lightRay.max = distanceToLight;
 
-					if(pScene->DoesHit(lightRay) && m_ShadowsEnabled)
+					/*if(pScene->DoesHit(lightRay) && m_ShadowsEnabled)
 					{
 						finalColor *= 0.5f;
-					}
+					}*/
 				}
 
 				//t value visualization darker = smaller t
