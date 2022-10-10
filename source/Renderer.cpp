@@ -4,7 +4,6 @@
 
 //Project includes
 #include "Renderer.h"
-#include "Math.h"
 #include "Matrix.h"
 #include "Material.h"
 #include "Scene.h"
@@ -70,47 +69,23 @@ void Renderer::Render(Scene* pScene) const
 					Vector3 toLight{ LightUtils::GetDirectionToLight(light, rayOrigin) };
 					const float distanceToLight = toLight.Normalize();
 
-					const float observedArea{ Vector3::Dot(closestHit.normal, toLight) };
-
-					if(observedArea > 0)
+					if(m_ShadowsEnabled)
 					{
-						finalColor += LightUtils::GetRadiance(light, closestHit.origin) * observedArea;
+						Ray lightRay{};
+						lightRay.origin = rayOrigin;
+						lightRay.direction = toLight;
+						lightRay.max = distanceToLight;
+
+						if (!pScene->DoesHit(lightRay))
+						{
+							CalculateFinalColor(closestHit, toLight, materials, light, rayDirection, finalColor);
+						}
 					}
-
-					/*switch (m_CurrentLightingMode)
+					else
 					{
-					case LightingMode::Combined:
-						if (observedArea > 0)
-						{
-							finalColor +=  * materials[closestHit.materialIndex]->Shade(closestHit, toLight, -rayDirection) * observedArea;
-						}
-						break;
-
-					case LightingMode::Radiance:
-						finalColor += LightUtils::GetRadiance(light, closestHit.origin);
-						break;
-
-					case LightingMode::BRFD:
-						finalColor += materials[closestHit.materialIndex]->Shade(closestHit, toLight, -rayDirection);
-						break;
-
-					case LightingMode::ObservedArea:
-						if (observedArea > 0)
-						{
-							finalColor += materials[closestHit.materialIndex]->Shade() * observedArea;
-						}
-						break;
-					}*/
+						CalculateFinalColor(closestHit, toLight, materials, light, rayDirection, finalColor);
+					}
 					
-					Ray lightRay{};
-					lightRay.origin = rayOrigin;
-					lightRay.direction = toLight;
-					lightRay.max = distanceToLight;
-
-					/*if(pScene->DoesHit(lightRay) && m_ShadowsEnabled)
-					{
-						finalColor *= 0.5f;
-					}*/
 				}
 
 				//t value visualization darker = smaller t
@@ -153,6 +128,36 @@ void Renderer::CycleLightingMode()
 		break;
 	case LightingMode::Combined:
 		m_CurrentLightingMode = LightingMode::ObservedArea;
+		break;
+	}
+}
+
+void Renderer::CalculateFinalColor(const HitRecord& closestHit, const Vector3& toLight, const std::vector<Material*>& materials, const Light& light, const Vector3& rayDirection, ColorRGB& finalColor) const
+{
+	const float observedArea{ Vector3::Dot(closestHit.normal, toLight) };
+
+	switch (m_CurrentLightingMode)
+	{
+	case LightingMode::Combined:
+		if (observedArea > 0)
+		{
+			finalColor += LightUtils::GetRadiance(light, closestHit.origin) * materials[closestHit.materialIndex]->Shade(closestHit, toLight, rayDirection) * observedArea;
+		}
+		break;
+
+	case LightingMode::Radiance:
+		finalColor += LightUtils::GetRadiance(light, closestHit.origin);
+		break;
+
+	case LightingMode::BRFD:
+		finalColor += materials[closestHit.materialIndex]->Shade(closestHit, toLight, rayDirection);
+		break;
+
+	case LightingMode::ObservedArea:
+		if (observedArea > 0)
+		{
+			finalColor += materials[closestHit.materialIndex]->Shade(closestHit, toLight, rayDirection) * observedArea;
+		}
 		break;
 	}
 }

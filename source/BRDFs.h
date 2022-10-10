@@ -14,13 +14,15 @@ namespace dae
 		static ColorRGB Lambert(float kd, const ColorRGB& cd)
 		{
 			//todo: W3
-			return{kd / M_PI * cd};
+			ColorRGB surfaceReflectivity{ kd * cd };
+			return{ surfaceReflectivity / static_cast<float>(M_PI) };
 		}
 
 		static ColorRGB Lambert(const ColorRGB& kd, const ColorRGB& cd)
 		{
 			//todo: W3
-			return {kd * cd};
+			ColorRGB surfaceReflectivity{ kd * cd };
+			return { surfaceReflectivity / static_cast<float>(M_PI) };
 		}
 
 		/**
@@ -65,8 +67,8 @@ namespace dae
 		{
 			//todo: W3
 			const float nDoth{ Vector3::Dot(n,h) };
-			const float roughnessSqured{ roughness * roughness };
-			return {static_cast<float>( roughnessSqured / M_PI * ( (nDoth * nDoth * (roughnessSqured - 1) + 1) * (nDoth * nDoth * (roughnessSqured - 1) + 1) ) ) };
+			const float roughnessSquared{ roughness * roughness };
+			return {roughnessSquared / ( static_cast<float>(M_PI) * ( (nDoth * nDoth * (roughnessSquared - 1) + 1) * (nDoth * nDoth * (roughnessSquared - 1) + 1) ) ) };
 		}
 
 

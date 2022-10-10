@@ -1,9 +1,19 @@
 #pragma once
 
 #include <cstdint>
+#include <vector>
+#include "Math.h"
+#include "DataTypes.h"
+#include "Material.h"
 
 struct SDL_Window;
 struct SDL_Surface;
+//struct HitRecord;
+//struct Vector3;
+//struct Light;
+//struct ColorRGB;
+
+
 
 namespace dae
 {
@@ -45,5 +55,7 @@ namespace dae
 
 		LightingMode m_CurrentLightingMode{ LightingMode::Combined };
 		bool m_ShadowsEnabled{ true };
+
+		void CalculateFinalColor(const HitRecord& closestHit, const Vector3& toLight, const std::vector<Material*>& materials, const Light& light, const Vector3& rayDirection, ColorRGB& finalColor) const;
 	};
 }
