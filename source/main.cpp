@@ -44,8 +44,7 @@ int main(int argc, char* args[])
 	//Initialize "framework"
 	const auto pTimer = new Timer();
 	const auto pRenderer = new Renderer(pWindow);
-
-	//const auto pScene = new Scene_W1();
+	
 	const auto pScene = new Scene_W3();
 	pScene->Initialize();
 

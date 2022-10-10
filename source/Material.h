@@ -125,7 +125,7 @@ namespace dae
 			const ColorRGB kd = (m_Metalness == 0) ? ColorRGB{ 1.f, 1.f, 1.f } - fersnel : ColorRGB{0.f, 0.f, 0.f};
 			const ColorRGB diffuse{ BRDF::Lambert(kd, f0) };
 
-			return {specular};
+			return {specular + diffuse};
 		}
 
 	private:

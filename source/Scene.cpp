@@ -267,18 +267,18 @@ namespace dae {
 		//const auto matLambert_Yellow = AddMaterial(new Material_Lambert{ colors::Yellow, 1.f });
 
 		//Phong Material
-		//const auto matLambertPhong_Blue = AddMaterial(new Material_LambertPhong(colors::Blue, 1.f, 1.f, 60.f));
+		const auto matLambertPhong_Blue = AddMaterial(new Material_LambertPhong(colors::Blue, 1.f, 1.f, 6.f));
 
 		//Spheres
 		AddSphere({ -.75f, 1.f, .0f }, 1.f, matId_Solid_Red);
-		AddSphere({ .75f, 1.f, .0f }, 1.f, matId_Solid_Blue);
+		AddSphere({ .75f, 1.f, .0f }, 1.f, matLambertPhong_Blue);
 
 		//Plane
 		AddPlane({ 0.f, 0.f, 0.f }, { 0.f, 1.f, 0.f }, matId_Solid_Yellow);
 
 		//Light
 		AddPointLight({ 0.f, 5.f, 5.f }, 25.f, colors::White);
-		//AddPointLight({ 0.f, 2.5f, -5.f }, 25.f, colors::White);
+		AddPointLight({ 0.f, 2.5f, -5.f }, 25.f, colors::White);
 	}
 #pragma endregion
 }
