@@ -53,7 +53,7 @@ namespace dae
 		{
 			//todo: W3
 			const float hDotv{ Vector3::Dot(h, v) };
-			return { f0 + ( ColorRGB{1.f,1.f,1.f} - f0) * powf(1 - hDotv, 5) };
+			return { f0 + ( ColorRGB{1.f,1.f,1.f} - f0) * (1 - hDotv) * (1 - hDotv)  * (1 - hDotv)  * (1 - hDotv) * (1 - hDotv) };
 		}
 
 		/**
@@ -67,8 +67,8 @@ namespace dae
 		{
 			//todo: W3
 			const float nDoth{ Vector3::Dot(n,h) };
-			const float roughnessSquared{ roughness * roughness };
-			return {roughnessSquared / ( static_cast<float>(M_PI) * ( (nDoth * nDoth * (roughnessSquared - 1) + 1) * (nDoth * nDoth * (roughnessSquared - 1) + 1) ) ) };
+			const float roughnessToThePower4{ roughness * roughness * roughness * roughness };
+			return { roughnessToThePower4 / ( static_cast<float>(M_PI) * ( (nDoth * nDoth * (roughnessToThePower4 - 1) + 1) * (nDoth * nDoth * (roughnessToThePower4 - 1) + 1) ) ) };
 		}
 
 

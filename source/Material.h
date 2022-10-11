@@ -112,22 +112,25 @@ namespace dae
 			const Vector3 normal{ hitRecord.normal };
 
 			//calculate specular
-			const ColorRGB f0 = (m_Metalness == 0) ? ColorRGB{0.04f, 0.04f, 0.04f} : m_Albedo; //base reflectivity
+			const ColorRGB f0 = (m_Metalness == 0.f) ? ColorRGB{0.04f, 0.04f, 0.04f} : m_Albedo; //base reflectivity
+
 			const Vector3 halfVector{ (-v + l) / (-v + l).Magnitude() };
+
 			const ColorRGB fersnel{ BRDF::FresnelFunction_Schlick(halfVector, -v, f0) };
 			const float normalDistribution{ BRDF::NormalDistribution_GGX(normal, halfVector, m_Roughness) };
 			const float geometry{ BRDF::GeometryFunction_Smith(normal, -v, l, m_Roughness) };
+
 			ColorRGB fng{ fersnel * normalDistribution * geometry };
 			const float denominator{ 4 * (Vector3::Dot(-v, normal) * Vector3::Dot(l, normal)) };
 			const ColorRGB specular{ fng / denominator };
 			 
 			//calculate diffuse
-			const ColorRGB kd = (m_Metalness == 0) ? ColorRGB{ 1.f, 1.f, 1.f } - fersnel : ColorRGB{0.f, 0.f, 0.f};
-			const ColorRGB diffuse{ BRDF::Lambert(kd, f0) };
+			const ColorRGB kd = (m_Metalness == 0.f) ? ColorRGB{ 1.f, 1.f, 1.f } - fersnel : ColorRGB{0.f, 0.f, 0.f};
+			const ColorRGB diffuse{ BRDF::Lambert(kd, m_Albedo) };
 
 			return {specular + diffuse};
 		}
-
+		
 	private:
 		ColorRGB m_Albedo{0.955f, 0.637f, 0.538f}; //Copper
 		float m_Metalness{1.0f};
