@@ -2,21 +2,18 @@
 
 #include <cstdint>
 #include <vector>
-#include "Math.h"
-#include "DataTypes.h"
-#include "Material.h"
 
 struct SDL_Window;
 struct SDL_Surface;
-//struct HitRecord;
-//struct Vector3;
-//struct Light;
-//struct ColorRGB;
-
-
 
 namespace dae
 {
+	struct HitRecord;
+	struct Vector3;
+	struct Material;
+	struct Light;
+	struct ColorRGB;
+
 	class Scene;
 
 	class Renderer final
