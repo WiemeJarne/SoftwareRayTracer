@@ -67,10 +67,11 @@ void Renderer::Render(Scene* pScene) const
 					rayOrigin += closestHit.normal * 0.0001f;
 
 					Vector3 toLight{ LightUtils::GetDirectionToLight(light, rayOrigin) };
-					const float distanceToLight = toLight.Normalize();
 
 					if(m_ShadowsEnabled)
 					{
+						const float distanceToLight = toLight.Normalize();
+
 						Ray lightRay{};
 						lightRay.origin = rayOrigin;
 						lightRay.direction = toLight;
@@ -85,7 +86,6 @@ void Renderer::Render(Scene* pScene) const
 					{
 						CalculateFinalColor(closestHit, toLight, materials, light, rayDirection, finalColor);
 					}
-					
 				}
 
 				//t value visualization darker = smaller t
@@ -146,17 +146,23 @@ void Renderer::CalculateFinalColor(const HitRecord& closestHit, const Vector3& t
 		break;
 
 	case LightingMode::Radiance:
-		finalColor += LightUtils::GetRadiance(light, closestHit.origin);
+		if(observedArea > 0)
+		{
+			finalColor += LightUtils::GetRadiance(light, closestHit.origin);
+		}
 		break;
 
 	case LightingMode::BRFD:
-		finalColor += materials[closestHit.materialIndex]->Shade(closestHit, toLight, rayDirection);
+		if(observedArea > 0)
+		{
+			finalColor += materials[closestHit.materialIndex]->Shade(closestHit, toLight, rayDirection);
+		}
 		break;
 
 	case LightingMode::ObservedArea:
 		if (observedArea > 0)
 		{
-			finalColor += materials[closestHit.materialIndex]->Shade(closestHit, toLight, rayDirection) * observedArea;
+			finalColor += ColorRGB{ 1.f, 1.f, 1.f } * observedArea;
 		}
 		break;
 	}

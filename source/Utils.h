@@ -137,7 +137,7 @@ namespace dae
 			if(light.type == LightType::Point)
 			{
 				const Vector3 targetToLight{ GetDirectionToLight(light, target) };
-				const float irradiance{ light.intensity / targetToLight.SqrMagnitude() };
+				const float irradiance{ light.intensity / (targetToLight.SqrMagnitude()) };
 				return{ light.color * irradiance };
 			}
 
@@ -145,8 +145,6 @@ namespace dae
 			{
 				return{ light.color * light.intensity };
 			}
-
-			return { };
 		}
 	}
 
