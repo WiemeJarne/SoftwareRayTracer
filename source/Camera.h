@@ -35,7 +35,6 @@ namespace dae
 
 		Matrix cameraToWorld{};
 
-
 		Matrix CalculateCameraToWorld()
 		{
 			//todo: W2
@@ -52,12 +51,18 @@ namespace dae
 
 		void Update(Timer* pTimer)
 		{
-			const float cameraMovementSpeed{ 20.f };
-			const float cameraRotationSpeed{ 180.f*TO_RADIANS };
+			float cameraMovementSpeed{ 20.f };
+			float cameraRotationSpeed{ 180.f*TO_RADIANS };
 			const float elapsedSec{ pTimer->GetElapsed() };
 
 			//Keyboard Input
 			const uint8_t* pKeyboardState = SDL_GetKeyboardState(nullptr);
+
+			if (pKeyboardState[SDL_SCANCODE_LSHIFT])
+			{
+				cameraMovementSpeed *= 4;
+				cameraRotationSpeed *= 4;
+			}
 
 			if (pKeyboardState[SDL_SCANCODE_W])
 			{

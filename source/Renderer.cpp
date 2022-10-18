@@ -138,25 +138,22 @@ void Renderer::CalculateFinalColor(const HitRecord& closestHit, const Vector3& t
 	switch (m_CurrentLightingMode)
 	{
 	case LightingMode::Combined:
-		if (observedArea > 0)
+		if (observedArea > 0.f)
 		{
 			finalColor += LightUtils::GetRadiance(light, closestHit.origin) * materials[closestHit.materialIndex]->Shade(closestHit, toLight, rayDirection) * observedArea;
 		}
 		break;
 
 	case LightingMode::Radiance:
-			finalColor += LightUtils::GetRadiance(light, closestHit.origin);
+		finalColor += LightUtils::GetRadiance(light, closestHit.origin);
 		break;
 
 	case LightingMode::BRFD:
-		if(observedArea > 0)
-		{
-			finalColor += materials[closestHit.materialIndex]->Shade(closestHit, toLight, rayDirection);
-		}
+		finalColor += materials[closestHit.materialIndex]->Shade(closestHit, toLight, rayDirection);	
 		break;
 
 	case LightingMode::ObservedArea:
-		if (observedArea > 0)
+		if (observedArea > 0.f)
 		{
 			finalColor += ColorRGB{ 1.f, 1.f, 1.f } * observedArea;
 		}

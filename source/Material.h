@@ -114,7 +114,7 @@ namespace dae
 			//calculate specular
 			const ColorRGB f0 = (m_Metalness == 0.f) ? ColorRGB{0.04f, 0.04f, 0.04f} : m_Albedo; //base reflectivity
 
-			const Vector3 halfVector{ (-v + l) / (-v + l).Magnitude() };
+			const Vector3 halfVector{ (-v + l).Normalized() };
 
 			const ColorRGB fersnel{ BRDF::FresnelFunction_Schlick(halfVector, -v, f0) };
 			const float normalDistribution{ BRDF::NormalDistribution_GGX(normal, halfVector, m_Roughness) };
