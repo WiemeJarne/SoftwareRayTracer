@@ -45,6 +45,9 @@ namespace dae
 	protected:
 		std::string	sceneName;
 
+		//temp (induvidual Triangle testing
+		std::vector<Triangle> m_Triangles{};
+
 		std::vector<Plane> m_PlaneGeometries{};
 		std::vector<Sphere> m_SphereGeometries{};
 		std::vector<TriangleMesh> m_TriangleMeshGeometries{};
@@ -116,6 +119,20 @@ namespace dae
 		Scene_W3_TestScene(Scene_W3_TestScene&&) noexcept = delete;
 		Scene_W3_TestScene& operator=(const Scene_W3_TestScene&) = delete;
 		Scene_W3_TestScene& operator=(Scene_W3_TestScene&&) noexcept = delete;
+
+		void Initialize() override;
+	};
+
+	class Scene_W4_TestScene final : public Scene
+	{
+	public:
+		Scene_W4_TestScene() = default;
+		~Scene_W4_TestScene() override = default;
+
+		Scene_W4_TestScene(const Scene_W4_TestScene&) = delete;
+		Scene_W4_TestScene(Scene_W4_TestScene&&) noexcept = delete;
+		Scene_W4_TestScene& operator=(const Scene_W4_TestScene&) = delete;
+		Scene_W4_TestScene& operator=(Scene_W4_TestScene&&) noexcept = delete;
 
 		void Initialize() override;
 	};
