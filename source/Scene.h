@@ -45,9 +45,6 @@ namespace dae
 	protected:
 		std::string	sceneName;
 
-		//temp (induvidual Triangle testing
-		std::vector<Triangle> m_Triangles{};
-
 		std::vector<Plane> m_PlaneGeometries{};
 		std::vector<Sphere> m_SphereGeometries{};
 		std::vector<TriangleMesh> m_TriangleMeshGeometries{};

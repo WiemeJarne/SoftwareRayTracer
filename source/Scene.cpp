@@ -54,6 +54,18 @@ namespace dae {
 				}
 			}
 		}
+
+		const size_t amountOfTriangles{ m_TriangleMeshGeometries.size() };
+		for(size_t index{}; index < amountOfTriangles; ++index)
+		{
+			if(GeometryUtils::HitTest_TriangleMesh(m_TriangleMeshGeometries[index], ray, tempClosestHit))
+			{
+				if (tempClosestHit.t < closestHit.t)
+				{
+					closestHit = tempClosestHit;
+				}
+			}
+		}
 	}
 
 	bool Scene::DoesHit(const Ray& ray) const
@@ -78,6 +90,16 @@ namespace dae {
 				return true;
 			}
 		}
+
+		const size_t amountOfTriangles{ m_TriangleMeshGeometries.size() };
+		for(size_t index{}; index < amountOfTriangles; ++index)
+		{
+			if (GeometryUtils::HitTest_TriangleMesh(m_TriangleMeshGeometries[index], ray, closestHit, true))
+			{
+				return true;
+			}
+		}
+
 		return false;
 	}
 
@@ -305,6 +327,22 @@ namespace dae {
 		//triangle.materialIndex = matLambert_White;
 		//
 		//m_Triangles.emplace_back(triangle);
+
+		//Triangle Mesh
+		const auto triangleMesh = AddTriangleMesh(TriangleCullMode::NoCulling, matLambert_White);
+		triangleMesh->positions = { {-.75f, -1.f, 0.f}, {-.75f, 1.f, 0.f}, {.75f, 1.f, 1.f}, {.75f, -1.f, 0.f} };
+		triangleMesh->indices =
+		{
+			0, 1, 2, //triangle 1
+			0, 2, 3  //triangle 2
+		};
+
+		triangleMesh->CalculateNormals();
+
+		triangleMesh->Translate({ 0.f, 1.5f, 0.f });
+		triangleMesh->RotateY(45);
+
+		triangleMesh->UpdateTransforms();
 
 		//Lights
 		AddPointLight(Vector3{ 0.f, 5.f, 5.f }, 50.f, ColorRGB{ 1.f, .61f, .45f }); //backLight

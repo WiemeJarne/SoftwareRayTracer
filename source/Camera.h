@@ -125,12 +125,12 @@ namespace dae
 			{
 				if (mouseY > 0)
 				{
-					origin += forward.Normalized() * -cameraMovementSpeed * elapsedSec;
+					origin += forward * -cameraMovementSpeed * elapsedSec;
 				}
 
 				if (mouseY < 0)
 				{
-					origin += forward.Normalized() * cameraMovementSpeed * elapsedSec;
+					origin += forward * cameraMovementSpeed * elapsedSec;
 				}
 		
 				if (mouseX > 0)
@@ -146,6 +146,8 @@ namespace dae
 				const Matrix result{ Matrix::CreateRotation(totalPitch, totalYaw, 0) };
 				forward = result.TransformVector(Vector3::UnitZ);
 				forward.Normalize();
+				right = result.TransformVector(Vector3::UnitX);
+				right.Normalize();
 			}
 			else if (mouseState & SDL_BUTTON_RMASK)
 			{
@@ -172,6 +174,8 @@ namespace dae
 				const Matrix result{ Matrix::CreateRotation(totalPitch, totalYaw, 0) };
 				forward = result.TransformVector(Vector3::UnitZ);
 				forward.Normalize();
+				right = result.TransformVector(Vector3::UnitX);
+				right.Normalize();
 			}
 		}
 	};
