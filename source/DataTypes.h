@@ -143,9 +143,10 @@ namespace dae
 		{
 			//Calculate Final Transform 
 			//const auto finalTransform = ...
-			const auto finalTransform = translationTransform * rotationTransform * scaleTransform;
+			const auto finalTransform = scaleTransform * rotationTransform * translationTransform;
 			//Transform Positions (positions > transformedPositions)
 			//...
+			transformedPositions.resize(0);
 			const size_t amountOfPositions{ positions.size() };
 			for(size_t index{}; index < amountOfPositions; ++index)
 			{
@@ -153,6 +154,7 @@ namespace dae
 			}
 			//Transform Normals (normals > transformedNormals)
 			//...
+			transformedNormals.resize(0);
 			const size_t amountOfNormals{ normals.size() };
 			for(size_t index{}; index < amountOfNormals; ++index)
 			{
