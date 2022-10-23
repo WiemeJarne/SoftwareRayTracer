@@ -117,14 +117,13 @@ namespace dae
 			
 
 			if (normalDotViewRay == 0.f) return false;
-
 			
 			
 			const Vector3 center{ (triangle.v0 + triangle.v1 + triangle.v2) / 3.f };
 			const Vector3 L{ center - ray.origin };
 			const float t = Vector3::Dot(L, triangle.normal) / normalDotViewRay;
 			
-			if (t > ray.min && t < ray.max)
+			if (t > ray.min && t < ray.max && hitRecord.t > t)
 			{
 				const Vector3 hitPoint{ ray.origin + t * v };
 
