@@ -55,8 +55,8 @@ namespace dae {
 			}
 		}
 
-		const size_t amountOfTriangles{ m_TriangleMeshGeometries.size() };
-		for(size_t index{}; index < amountOfTriangles; ++index)
+		const size_t amountOfTrianglesMeshes{ m_TriangleMeshGeometries.size() };
+		for(size_t index{}; index < amountOfTrianglesMeshes; ++index)
 		{
 			if(GeometryUtils::HitTest_TriangleMesh(m_TriangleMeshGeometries[index], ray, tempClosestHit))
 			{
@@ -331,7 +331,7 @@ namespace dae {
 		//Triangle Mesh
 		pMesh = AddTriangleMesh(TriangleCullMode::BackFaceCulling, matLambert_White);
 
-		Utils::ParseOBJ("Resources/simple_cube.obj",
+		Utils::ParseOBJ("Resources/simple_object.obj",
 			pMesh->positions,
 			pMesh->normals,
 			pMesh->indices);

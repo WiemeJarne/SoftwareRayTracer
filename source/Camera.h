@@ -40,13 +40,14 @@ namespace dae
 			//todo: W2
 			Vector3 right{ Vector3::Cross(up, forward).Normalized() };
 			Vector3 up{ Vector3::Cross(forward, right).Normalized() };
-			return Matrix
+			cameraToWorld =
 			{
 				{right, 0},
 				{up, 0},
 				{forward, 0},
 				{origin, 1}
 			};
+			return cameraToWorld;
 		}
 
 		void Update(Timer* pTimer)

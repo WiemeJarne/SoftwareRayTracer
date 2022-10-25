@@ -115,15 +115,13 @@ namespace dae
 				if (triangle.cullMode == TriangleCullMode::FrontFaceCulling && normalDotViewRay < 0) return false;
 			}
 			
-
 			if (normalDotViewRay == 0.f) return false;
-			
 			
 			const Vector3 center{ (triangle.v0 + triangle.v1 + triangle.v2) / 3.f };
 			const Vector3 L{ center - ray.origin };
 			const float t = Vector3::Dot(L, triangle.normal) / normalDotViewRay;
 			
-			if (t > ray.min && t < ray.max && hitRecord.t > t)
+			if (t > ray.min && t < ray.max)
 			{
 				const Vector3 hitPoint{ ray.origin + t * v };
 
@@ -150,7 +148,6 @@ namespace dae
 				return true;
 			}
 			return false;
-			
 		}
 
 		inline bool HitTest_Triangle(const Triangle& triangle, const Ray& ray)
@@ -163,8 +160,10 @@ namespace dae
 		inline bool HitTest_TriangleMesh(const TriangleMesh& mesh, const Ray& ray, HitRecord& hitRecord, bool ignoreHitRecord = false)
 		{
 			//todo W5
+			HitRecord tempClosestHit{};
+
 			const size_t amountOfIndices{ mesh.indices.size() };
-			for(size_t index{}; index < amountOfIndices -1; ++index)
+			for(size_t index{}; index < amountOfIndices - 1; ++index)
 			{
 				Triangle triangle{};
 				triangle.normal = mesh.transformedNormals[index / 3];
@@ -177,9 +176,22 @@ namespace dae
 				++index;
 				triangle.v2 = mesh.transformedPositions[mesh.indices[index]];
 
-				
+				if (ignoreHitRecord)
+				{
+					if (HitTest_Triangle(triangle, ray, hitRecord, ignoreHitRecord)) return true;
+				}
 
-				if (HitTest_Triangle(triangle, ray, hitRecord, ignoreHitRecord)) return true;
+				HitTest_Triangle(triangle, ray, tempClosestHit, ignoreHitRecord);
+
+				if (tempClosestHit.t < hitRecord.t)
+				{
+					hitRecord = tempClosestHit;
+				}
+			}
+
+			if (hitRecord.didHit)
+			{
+				return true;
 			}
 
 			return false;

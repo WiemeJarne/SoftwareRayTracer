@@ -13,6 +13,7 @@ namespace dae
 	struct Material;
 	struct Light;
 	struct ColorRGB;
+	class Camera;
 
 	class Scene;
 
@@ -53,6 +54,25 @@ namespace dae
 		LightingMode m_CurrentLightingMode{ LightingMode::Combined };
 		bool m_ShadowsEnabled{ true };
 
-		void CalculateFinalColor(const HitRecord& closestHit, const Vector3& toLight, const std::vector<Material*>& materials, const Light& light, const Vector3& rayDirection, ColorRGB& finalColor) const;
+		void RenderPixel
+		(
+			Scene* pScene,
+			uint32_t pixelIndex,
+			float fov,
+			float aspectRatio,
+			const Camera& camera,
+			const std::vector<Light>& lights,
+			const std::vector<Material*>& materials
+		) const;
+
+		void CalculateFinalColor
+		(
+			const HitRecord& closestHit,
+			const Vector3& toLight,
+			const std::vector<Material*>& materials,
+			const Light& light,
+			const Vector3& rayDirection,
+			ColorRGB& finalColor
+		) const;
 	};
 }
