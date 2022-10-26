@@ -156,10 +156,41 @@ namespace dae
 			return HitTest_Triangle(triangle, ray, temp, true);
 		}
 #pragma endregion
+
+#pragma region TriangleMesh SlabTest
+		inline bool SlabTest_TriangleMesh(const TriangleMesh& mesh, const Ray& ray)
+		{
+			float tX1{ (mesh.transformedMinAABB.x - ray.origin.x) / ray.direction.x };
+			float tX2{ (mesh.transformedMaxAABB.x - ray.origin.x) / ray.direction.x };
+
+			float tMin{ std::min(tX1, tX2) };
+			float tMax{ std::max(tX1, tX2) };
+
+			float tY1{ (mesh.transformedMinAABB.y - ray.origin.y) / ray.direction.y };
+			float tY2{ (mesh.transformedMaxAABB.y - ray.origin.y) / ray.direction.y };
+
+			tMin = std::max(tMin, std::min(tY1, tY2));
+			tMax = std::max(tMax, std::min(tY1, tY2));
+
+			float tZ1{ (mesh.transformedMinAABB.z - ray.origin.z) / ray.direction.z };
+			float tZ2{ (mesh.transformedMaxAABB.z - ray.origin.z) / ray.direction.z };
+
+			tMin = std::max(tMin, std::min(tZ1, tZ2));
+			tMax = std::min(tMax, std::min(tZ1, tZ2));
+
+			return tMax > 0 && tMax >= tMin;
+		}
+#pragma endregion
+
 #pragma region TriangeMesh HitTest
 		inline bool HitTest_TriangleMesh(const TriangleMesh& mesh, const Ray& ray, HitRecord& hitRecord, bool ignoreHitRecord = false)
 		{
-			//todo W5
+			//slabTest
+			if (!SlabTest_TriangleMesh(mesh, ray))
+			{
+				return false;
+			}
+
 			HitRecord tempClosestHit{};
 
 			const size_t amountOfIndices{ mesh.indices.size() };

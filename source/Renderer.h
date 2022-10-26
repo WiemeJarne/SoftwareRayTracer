@@ -10,10 +10,10 @@ namespace dae
 {
 	struct HitRecord;
 	struct Vector3;
-	struct Material;
 	struct Light;
 	struct ColorRGB;
-	class Camera;
+	struct Camera;
+	class Material;
 
 	class Scene;
 

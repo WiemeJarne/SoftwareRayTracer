@@ -170,6 +170,6 @@ namespace dae
 		void Initialize() override;
 
 	private:
-		TriangleMesh* pMesh{ nullptr };
+		TriangleMesh* m_pMesh{ nullptr };
 	};
 }
