@@ -10,7 +10,10 @@ namespace dae
 {
 	//Forward Declarations
 	class Timer;
-	class Material;
+	class Material_SolidColor;
+	class Material_Lambert;
+	class Material_LambertPhong;
+	class Material_CookTorrence;
 	struct Plane;
 	struct Sphere;
 	struct Light;
@@ -40,7 +43,10 @@ namespace dae
 		const std::vector<Plane>& GetPlaneGeometries() const { return m_PlaneGeometries; }
 		const std::vector<Sphere>& GetSphereGeometries() const { return m_SphereGeometries; }
 		const std::vector<Light>& GetLights() const { return m_Lights; }
-		const std::vector<Material*> GetMaterials() const { return m_Materials; }
+		const std::vector<Material_SolidColor*> GetSolidColorMaterials() const { return m_SolidColorMaterials; }
+		const std::vector<Material_Lambert*> GetLambertMaterials() const { return m_LambertMaterials; }
+		const std::vector<Material_LambertPhong*> GetLambertPhongMaterials() const { return m_LambertPhongMaterials; }
+		const std::vector<Material_CookTorrence*> GetCookTorrenceMaterials() const { return m_CookTorrenceMaterials; }
 
 	protected:
 		std::string	sceneName;
@@ -49,17 +55,24 @@ namespace dae
 		std::vector<Sphere> m_SphereGeometries{};
 		std::vector<TriangleMesh> m_TriangleMeshGeometries{};
 		std::vector<Light> m_Lights{};
-		std::vector<Material*> m_Materials{};
+		std::vector<Material_SolidColor*> m_SolidColorMaterials{};
+		std::vector<Material_Lambert*> m_LambertMaterials{};
+		std::vector<Material_LambertPhong*> m_LambertPhongMaterials{};
+		std::vector<Material_CookTorrence*> m_CookTorrenceMaterials{};
+
 
 		Camera m_Camera{};
 
-		Sphere* AddSphere(const Vector3& origin, float radius, unsigned char materialIndex = 0);
-		Plane* AddPlane(const Vector3& origin, const Vector3& normal, unsigned char materialIndex = 0);
-		TriangleMesh* AddTriangleMesh(TriangleCullMode cullMode, unsigned char materialIndex = 0);
+		Sphere* AddSphere(const Vector3& origin, float radius, MaterialType materialType, unsigned char materialIndex = 0);
+		Plane* AddPlane(const Vector3& origin, const Vector3& normal, MaterialType materialType, unsigned char materialIndex = 0);
+		TriangleMesh* AddTriangleMesh(TriangleCullMode cullMode, MaterialType materialType, unsigned char materialIndex = 0);
 
 		Light* AddPointLight(const Vector3& origin, float intensity, const ColorRGB& color);
 		Light* AddDirectionalLight(const Vector3& direction, float intensity, const ColorRGB& color);
-		unsigned char AddMaterial(Material* pMaterial);
+		unsigned char AddMaterialSolidColor(Material_SolidColor* pMaterial);
+		unsigned char AddMaterialLambert(Material_Lambert* pMaterial);
+		unsigned char AddMaterialLambertPhong(Material_LambertPhong* pMaterial);
+		unsigned char AddMaterialCookTorrence(Material_CookTorrence* pMaterial);
 	};
 
 	//+++++++++++++++++++++++++++++++++++++++++

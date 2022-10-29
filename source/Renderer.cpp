@@ -34,7 +34,10 @@ void Renderer::Render(Scene* pScene) const
 	
 	const float aspectRatio{ static_cast<float>(m_Width) / static_cast<float>(m_Height) };
 
-	auto& materials = pScene->GetMaterials();
+	auto& solidColorMaterials = pScene->GetSolidColorMaterials();
+	auto& lambertMaterials = pScene->GetLambertMaterials();
+	auto& lambertPhongMaterials = pScene->GetLambertPhongMaterials();
+	auto& cookTorrenceMaterials = pScene->GetCookTorrenceMaterials();
 	auto& lights = pScene->GetLights();
 
 	const uint32_t amountOfPixels = m_Width * m_Height;
@@ -62,7 +65,7 @@ void Renderer::Render(Scene* pScene) const
 				const uint32_t lastPixelIndex{ currentPixelIndex + taskSize };
 				for (uint32_t pixelIndex{ currentPixelIndex }; pixelIndex < lastPixelIndex; ++pixelIndex)
 				{
-					RenderPixel(pScene, pixelIndex, fov, aspectRatio, camera, lights, materials);
+					RenderPixel(pScene, pixelIndex, fov, aspectRatio, camera, lights, solidColorMaterials, lambertMaterials, lambertPhongMaterials, cookTorrenceMaterials);
 				}
 			}));
 
@@ -79,14 +82,14 @@ void Renderer::Render(Scene* pScene) const
 	//Parallel-For logic
 	concurrency::parallel_for(0u, amountOfPixels, [=, this](int index)
 		{
-			RenderPixel(pScene, index, fov, aspectRatio, camera, lights, materials);
+			RenderPixel(pScene, index, fov, aspectRatio, camera, lights, solidColorMaterials, lambertMaterials, lambertPhongMaterials, cookTorrenceMaterials);
 		});
 
 #else
 	//Synchronous Logic (no threading)
-	for (uint32_t index{}; index < amountOfPixel; ++index)
+	for (uint32_t index{}; index < amountOfPixels; ++index)
 	{
-		RenderPixel(pScene, index, fov, aspectRatio, pScene->GetCamera(), lights, materials);
+		RenderPixel(pScene, index, fov, aspectRatio, camera, lights, solidColorMaterials, lambertMaterials, lambertPhongMaterials, cookTorrenceMaterials);
 	}
 
 #endif
@@ -96,15 +99,30 @@ void Renderer::Render(Scene* pScene) const
 	SDL_UpdateWindowSurface(m_pWindow);
 }
 
-void Renderer::RenderPixel(Scene* pScene, uint32_t pixelIndex, float fov, float aspectRatio, const Camera& camera, const std::vector<Light>& lights, const std::vector<Material*>& materials) const
+void Renderer::RenderPixel
+(
+	Scene* pScene,
+	uint32_t pixelIndex,
+	float fov,
+	float aspectRatio,
+	const Camera& camera,
+	const std::vector<Light>& lights,
+	const std::vector<Material_SolidColor*>& solidColorMaterials,
+	const std::vector<Material_Lambert*>& lambertMaterials,
+	const std::vector<Material_LambertPhong*>& lambertPhongMaterials,
+	const std::vector<Material_CookTorrence*>& cookTorrenceMaterials
+) const
 {
 	const int px = pixelIndex % m_Width;
 	const int py = pixelIndex / m_Width;
 
-	Vector3 rayDirection{};
-	rayDirection.x = (2 * (px + 0.5f) / static_cast<float>(m_Width) - 1) * aspectRatio * fov;
-	rayDirection.y = (1 - 2 * (py + 0.5f) / static_cast<float>(m_Height)) * fov;
-	rayDirection.z = 1.f;
+	Vector3 rayDirection
+	{
+		(2 * (px + 0.5f) / static_cast<float>(m_Width) - 1)* aspectRatio* fov,
+		(1 - 2 * (py + 0.5f) / static_cast<float>(m_Height))* fov,
+		1.f
+	};
+
 	rayDirection.Normalize();
 	rayDirection = camera.cameraToWorld.TransformVector(rayDirection);
 	
@@ -134,12 +152,12 @@ void Renderer::RenderPixel(Scene* pScene, uint32_t pixelIndex, float fov, float 
 
 				if (!pScene->DoesHit(lightRay))
 				{
-					CalculateFinalColor(closestHit, toLight, materials, light, rayDirection, finalColor);
+					CalculateFinalColor(closestHit, toLight, solidColorMaterials, lambertMaterials, lambertPhongMaterials, cookTorrenceMaterials, light, rayDirection, finalColor);
 				}
 			}
 			else
 			{
-				CalculateFinalColor(closestHit, toLight, materials, light, rayDirection, finalColor);
+				CalculateFinalColor(closestHit, toLight, solidColorMaterials, lambertMaterials, lambertPhongMaterials, cookTorrenceMaterials, light, rayDirection, finalColor);
 			}
 		}
 	}
@@ -177,7 +195,18 @@ void Renderer::CycleLightingMode()
 	}
 }
 
-void Renderer::CalculateFinalColor(const HitRecord& closestHit, const Vector3& toLight, const std::vector<Material*>& materials, const Light& light, const Vector3& rayDirection, ColorRGB& finalColor) const
+void Renderer::CalculateFinalColor
+(
+	const HitRecord& closestHit,
+	const Vector3& toLight,
+	const std::vector<Material_SolidColor*>& solidColorMaterials,
+	const std::vector<Material_Lambert*>& lambertMaterials,
+	const std::vector<Material_LambertPhong*>& lambertPhongMaterials,
+	const std::vector<Material_CookTorrence*>& cookTorrenceMaterials,
+	const Light& light,
+	const Vector3& rayDirection,
+	ColorRGB& finalColor
+) const
 {
 	const float observedArea{ Vector3::Dot(closestHit.normal, toLight) };
 
@@ -186,23 +215,40 @@ void Renderer::CalculateFinalColor(const HitRecord& closestHit, const Vector3& t
 	case LightingMode::Combined:
 		if (observedArea > 0.f)
 		{
-			finalColor += LightUtils::GetRadiance(light, closestHit.origin) * materials[closestHit.materialIndex]->Shade(closestHit, toLight, rayDirection) * observedArea;
+			switch ( closestHit.materialType )
+			{
+			case MaterialType::solidColor:
+				finalColor += LightUtils::GetRadiance(light, closestHit.origin) * solidColorMaterials[closestHit.materialIndex]->Shade(closestHit, toLight, rayDirection) * observedArea;
+				break;
+
+			case MaterialType::lambert:
+				finalColor += LightUtils::GetRadiance(light, closestHit.origin) * lambertMaterials[closestHit.materialIndex]->Shade(closestHit, toLight, rayDirection) * observedArea;
+				break;
+
+			case MaterialType::lambertPhong:
+				finalColor += LightUtils::GetRadiance(light, closestHit.origin) * lambertPhongMaterials[closestHit.materialIndex]->Shade(closestHit, toLight, rayDirection) * observedArea;
+				break;
+
+			case MaterialType::cookTorrence:
+				finalColor += LightUtils::GetRadiance(light, closestHit.origin) * cookTorrenceMaterials[closestHit.materialIndex]->Shade(closestHit, toLight, rayDirection) * observedArea;
+				break;
+			}
 		}
 		break;
 
-	case LightingMode::Radiance:
-		finalColor += LightUtils::GetRadiance(light, closestHit.origin);
-		break;
-
-	case LightingMode::BRFD:
-		finalColor += materials[closestHit.materialIndex]->Shade(closestHit, toLight, rayDirection);	
-		break;
-
-	case LightingMode::ObservedArea:
-		if (observedArea > 0.f)
-		{
-			finalColor += ColorRGB{ 1.f, 1.f, 1.f } * observedArea;
-		}
-		break;
+	//case LightingMode::Radiance:
+	//	finalColor += LightUtils::GetRadiance(light, closestHit.origin);
+	//	break;
+	//
+	//case LightingMode::BRFD:
+	//	finalColor += materials[closestHit.materialIndex]->Shade(closestHit, toLight, rayDirection);	
+	//	break;
+	//
+	//case LightingMode::ObservedArea:
+	//	if (observedArea > 0.f)
+	//	{
+	//		finalColor += ColorRGB{ 1.f, 1.f, 1.f } * observedArea;
+	//	}
+	//	break;
 	}
 }

@@ -65,33 +65,33 @@ namespace dae
 				cameraRotationSpeed *= 4;
 			}
 
-			if (pKeyboardState[SDL_SCANCODE_W])
+			if (pKeyboardState[SDL_SCANCODE_W] || pKeyboardState[SDL_SCANCODE_UP])
 			{
 				origin += forward * cameraMovementSpeed * elapsedSec;
 			}
 
-			if (pKeyboardState[SDL_SCANCODE_S])
+			if (pKeyboardState[SDL_SCANCODE_S] || pKeyboardState[SDL_SCANCODE_DOWN])
 			{
 				origin += -forward * cameraMovementSpeed * elapsedSec;
 			}
 
-			if (pKeyboardState[SDL_SCANCODE_D])
+			if (pKeyboardState[SDL_SCANCODE_D] || pKeyboardState[SDL_SCANCODE_RIGHT])
 			{
 				origin += right * cameraMovementSpeed * elapsedSec;
 			}
 
-			if (pKeyboardState[SDL_SCANCODE_A])
+			if (pKeyboardState[SDL_SCANCODE_A] || pKeyboardState[SDL_SCANCODE_LEFT])
 			{
 				origin += -right * cameraMovementSpeed * elapsedSec;
 			}
 
 			//change fov
-			if (pKeyboardState[SDL_SCANCODE_LEFT] && fovAngle > minFovAngle)
+			if (pKeyboardState[SDL_SCANCODE_Q] && fovAngle > minFovAngle)
 			{
 				fovAngle -= 1.f;
 			}
 
-			if (pKeyboardState[SDL_SCANCODE_RIGHT] && fovAngle < maxFovAngle)
+			if (pKeyboardState[SDL_SCANCODE_E] && fovAngle < maxFovAngle)
 			{
 				fovAngle += 1.f;
 			}

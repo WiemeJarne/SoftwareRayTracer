@@ -13,7 +13,11 @@ namespace dae
 	struct Light;
 	struct ColorRGB;
 	struct Camera;
-	class Material;
+
+	class Material_SolidColor;
+	class Material_Lambert;
+	class Material_LambertPhong;
+	class Material_CookTorrence;
 
 	class Scene;
 
@@ -62,14 +66,20 @@ namespace dae
 			float aspectRatio,
 			const Camera& camera,
 			const std::vector<Light>& lights,
-			const std::vector<Material*>& materials
+			const std::vector<Material_SolidColor*>& solidColorMaterials,
+			const std::vector<Material_Lambert*>& lambertMaterials,
+			const std::vector<Material_LambertPhong*>& lambertPhongMaterials,
+			const std::vector<Material_CookTorrence*>& cookTorrenceMaterials
 		) const;
 
 		void CalculateFinalColor
 		(
 			const HitRecord& closestHit,
 			const Vector3& toLight,
-			const std::vector<Material*>& materials,
+			const std::vector<Material_SolidColor*>& solidColorMaterials,
+			const std::vector<Material_Lambert*>& lambertMaterials,
+			const std::vector<Material_LambertPhong*>& lambertPhongMaterials,
+			const std::vector<Material_CookTorrence*>& cookTorrenceMaterials,
 			const Light& light,
 			const Vector3& rayDirection,
 			ColorRGB& finalColor

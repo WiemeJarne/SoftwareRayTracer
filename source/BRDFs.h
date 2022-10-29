@@ -13,16 +13,12 @@ namespace dae
 		 */
 		static ColorRGB Lambert(float kd, const ColorRGB& cd)
 		{
-			//todo: W3
-			ColorRGB surfaceReflectivity{ kd * cd };
-			return{ surfaceReflectivity / static_cast<float>(M_PI) };
+			return{ kd * cd / static_cast<float>(M_PI) };
 		}
 
 		static ColorRGB Lambert(const ColorRGB& kd, const ColorRGB& cd)
 		{
-			//todo: W3
-			ColorRGB surfaceReflectivity{ kd * cd };
-			return { surfaceReflectivity / static_cast<float>(M_PI) };
+			return { kd * cd / static_cast<float>(M_PI) };
 		}
 
 		/**
@@ -36,11 +32,7 @@ namespace dae
 		 */
 		static ColorRGB Phong(float ks, float exp, const Vector3& l, const Vector3& v, const Vector3& n)
 		{
-			//todo: W3
-			const Vector3 reflect{ 2 * std::max(Vector3::Dot(n,l), 0.f) * n - l};
-			const float cosAlpha{ std::max(Vector3::Dot(reflect, v), 0.f) };
-
-			return { ColorRGB{1.f, 1.f, 1.f} * ks * powf(cosAlpha, exp) };
+			return { ColorRGB{1.f, 1.f, 1.f} * ks * powf(std::max(Vector3::Dot(2 * std::max(Vector3::Dot(n,l), 0.f) * n - l, v), 0.f), exp) };
 		}
 
 		/**
@@ -52,9 +44,7 @@ namespace dae
 		 */
 		static ColorRGB FresnelFunction_Schlick(const Vector3& h, const Vector3& v, const ColorRGB& f0)
 		{
-			//todo: W3
-			const float hDotv{ std::max(Vector3::Dot(h, v), 0.f) };
-			return { f0 + ( ColorRGB{1.f,1.f,1.f} - f0) * (1 - hDotv) * (1 - hDotv)  * (1 - hDotv)  * (1 - hDotv) * (1 - hDotv) };
+			return { f0 + ( ColorRGB{1.f,1.f,1.f} - f0) * (1 - std::max(Vector3::Dot(h, v), 0.f)) * (1 - std::max(Vector3::Dot(h, v), 0.f))  * (1 - std::max(Vector3::Dot(h, v), 0.f))  * (1 - std::max(Vector3::Dot(h, v), 0.f)) * (1 - std::max(Vector3::Dot(h, v), 0.f)) };
 		}
 
 		/**
@@ -66,10 +56,7 @@ namespace dae
 		 */
 		static float NormalDistribution_GGX(const Vector3& n, const Vector3& h, float roughness)
 		{
-			//todo: W3
-			const float nDoth{ std::max(Vector3::Dot(n,h), 0.f) };
-			const float roughnessToThePower4{ roughness * roughness * roughness * roughness };
-			return { roughnessToThePower4 / ( static_cast<float>(M_PI) * ( (nDoth * nDoth * (roughnessToThePower4 - 1) + 1) * (nDoth * nDoth * (roughnessToThePower4 - 1) + 1) ) ) };
+			return { roughness * roughness * roughness * roughness / ( static_cast<float>(M_PI) * ( (std::max(Vector3::Dot(n,h), 0.f) * std::max(Vector3::Dot(n,h), 0.f) * (roughness * roughness * roughness * roughness - 1) + 1) * (std::max(Vector3::Dot(n,h), 0.f) * std::max(Vector3::Dot(n,h), 0.f) * (roughness * roughness * roughness * roughness - 1) + 1) ) ) };
 		}
 
 
@@ -82,11 +69,7 @@ namespace dae
 		 */
 		static float GeometryFunction_SchlickGGX(const Vector3& n, const Vector3& v, float roughness)
 		{
-			//todo: W3
-			const float roughnessSquared{ roughness * roughness };
-			const float k{ (roughnessSquared + 1) * (roughnessSquared + 1) / 8 };
-			const float nDotv{ std::max(Vector3::Dot(n, v), 0.f) };
-			return { nDotv / (nDotv * (1 - k) + k) };
+			return { std::max(Vector3::Dot(n, v), 0.f) / (std::max(Vector3::Dot(n, v), 0.f) * (1 - (roughness * roughness + 1) * (roughness * roughness + 1) / 8) + (roughness * roughness + 1) * (roughness * roughness + 1) / 8) };
 		}
 
 		/**
@@ -99,9 +82,7 @@ namespace dae
 		 */
 		static float GeometryFunction_Smith(const Vector3& n, const Vector3& v, const Vector3& l, float roughness)
 		{
-			//todo: W3
 			return {GeometryFunction_SchlickGGX(n, v, roughness) * GeometryFunction_SchlickGGX(n, l, roughness)};
 		}
-
 	}
 }

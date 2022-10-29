@@ -6,6 +6,14 @@
 
 namespace dae
 {
+	enum class MaterialType
+	{
+		solidColor,
+		lambert,
+		lambertPhong,
+		cookTorrence
+	};
+
 #pragma region GEOMETRY
 	struct Sphere
 	{
@@ -13,6 +21,7 @@ namespace dae
 		float radius{};
 
 		unsigned char materialIndex{ 0 };
+		MaterialType materialType{};
 	};
 
 	struct Plane
@@ -21,6 +30,7 @@ namespace dae
 		Vector3 normal{};
 
 		unsigned char materialIndex{ 0 };
+		MaterialType materialType{};
 	};
 
 	enum class TriangleCullMode
@@ -52,6 +62,7 @@ namespace dae
 
 		TriangleCullMode cullMode{};
 		unsigned char materialIndex{};
+		MaterialType materialType{};
 	};
 
 	struct TriangleMesh
@@ -77,6 +88,7 @@ namespace dae
 		std::vector<Vector3> normals{};
 		std::vector<int> indices{};
 		unsigned char materialIndex{};
+		MaterialType materialType{};
 
 		TriangleCullMode cullMode{TriangleCullMode::BackFaceCulling};
 
@@ -266,6 +278,7 @@ namespace dae
 
 		bool didHit{ false };
 		unsigned char materialIndex{ 0 };
+		MaterialType materialType;
 	};
 #pragma endregion
 }

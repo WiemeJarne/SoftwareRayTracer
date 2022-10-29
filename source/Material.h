@@ -5,40 +5,17 @@
 
 namespace dae
 {
-#pragma region Material BASE
-	class Material
-	{
-	public:
-		Material() = default;
-		virtual ~Material() = default;
-
-		Material(const Material&) = delete;
-		Material(Material&&) noexcept = delete;
-		Material& operator=(const Material&) = delete;
-		Material& operator=(Material&&) noexcept = delete;
-
-		/**
-		 * \brief Function used to calculate the correct color for the specific material and its parameters
-		 * \param hitRecord current hitrecord
-		 * \param l light direction
-		 * \param v view direction
-		 * \return color
-		 */
-		virtual ColorRGB Shade(const HitRecord& hitRecord = {}, const Vector3& l = {}, const Vector3& v = {}) = 0;
-	};
-#pragma endregion
-
 #pragma region Material SOLID COLOR
 	//SOLID COLOR
 	//===========
-	class Material_SolidColor final : public Material
+	class Material_SolidColor final
 	{
 	public:
 		Material_SolidColor(const ColorRGB& color): m_Color(color)
 		{
 		}
 
-		ColorRGB Shade(const HitRecord& hitRecord, const Vector3& l, const Vector3& v) override
+		ColorRGB Shade(const HitRecord& hitRecord, const Vector3& l, const Vector3& v) const
 		{
 			return m_Color;
 		}
@@ -51,15 +28,14 @@ namespace dae
 #pragma region Material LAMBERT
 	//LAMBERT
 	//=======
-	class Material_Lambert final : public Material
+	class Material_Lambert final
 	{
 	public:
 		Material_Lambert(const ColorRGB& diffuseColor, float diffuseReflectance) :
 			m_DiffuseColor(diffuseColor), m_DiffuseReflectance(diffuseReflectance){}
 
-		ColorRGB Shade(const HitRecord& hitRecord = {}, const Vector3& l = {}, const Vector3& v = {}) override
+		ColorRGB Shade(const HitRecord& hitRecord = {}, const Vector3& l = {}, const Vector3& v = {}) const
 		{
-			//todo: W3
 			return{ BRDF::Lambert(m_DiffuseReflectance, m_DiffuseColor)};
 		}
 
@@ -72,7 +48,7 @@ namespace dae
 #pragma region Material LAMBERT PHONG
 	//LAMBERT-PHONG
 	//=============
-	class Material_LambertPhong final : public Material
+	class Material_LambertPhong final
 	{
 	public:
 		Material_LambertPhong(const ColorRGB& diffuseColor, float kd, float ks, float phongExponent):
@@ -81,9 +57,8 @@ namespace dae
 		{
 		}
 
-		ColorRGB Shade(const HitRecord& hitRecord = {}, const Vector3& l = {}, const Vector3& v = {}) override
+		ColorRGB Shade(const HitRecord& hitRecord = {}, const Vector3& l = {}, const Vector3& v = {}) const
 		{
-			//todo: W3
 			return{  BRDF::Lambert(m_DiffuseReflectance, m_DiffuseColor)
 				   + BRDF::Phong(m_SpecularReflectance, m_PhongExponent, l, -v, hitRecord.normal)};
 		}
@@ -98,7 +73,7 @@ namespace dae
 
 #pragma region Material COOK TORRENCE
 	//COOK TORRENCE
-	class Material_CookTorrence final : public Material
+	class Material_CookTorrence final
 	{
 	public:
 		Material_CookTorrence(const ColorRGB& albedo, float metalness, float roughness):
@@ -106,29 +81,19 @@ namespace dae
 		{
 		}
 
-		ColorRGB Shade(const HitRecord& hitRecord = {}, const Vector3& l = {}, const Vector3& v = {}) override
+		ColorRGB Shade(const HitRecord& hitRecord = {}, const Vector3& l = {}, const Vector3& v = {}) const
 		{
-			//todo: W3
 			const Vector3 normal{ hitRecord.normal };
-
-			//calculate specular
-			const ColorRGB f0 = (m_Metalness == 0.f) ? ColorRGB{0.04f, 0.04f, 0.04f} : m_Albedo; //base reflectivity
 
 			const Vector3 halfVector{ (-v + l).Normalized() };
 
-			const ColorRGB fersnel{ BRDF::FresnelFunction_Schlick(halfVector, -v, f0) };
-			const float normalDistribution{ BRDF::NormalDistribution_GGX(normal, halfVector, m_Roughness) };
-			const float geometry{ BRDF::GeometryFunction_Smith(normal, -v, l, m_Roughness) };
+			const ColorRGB fersnel{ BRDF::FresnelFunction_Schlick(halfVector, -v, (m_Metalness == 0.f) ? ColorRGB{0.04f, 0.04f, 0.04f} : m_Albedo) };
 
-			ColorRGB fng{ fersnel * normalDistribution * geometry };
-			const float denominator{ 4 * (Vector3::Dot(-v, normal) * Vector3::Dot(l, normal)) };
-			const ColorRGB specular{ fng / denominator };
+			ColorRGB fng{ fersnel * BRDF::NormalDistribution_GGX(normal, halfVector, m_Roughness) * BRDF::GeometryFunction_Smith(normal, -v, l, m_Roughness) };
 			 
-			//calculate diffuse
 			const ColorRGB kd = (m_Metalness == 0.f) ? ColorRGB{ 1.f, 1.f, 1.f } - fersnel : ColorRGB{0.f, 0.f, 0.f};
-			const ColorRGB diffuse{ BRDF::Lambert(kd, m_Albedo) };
 
-			return {specular + diffuse};
+			return { fng / 4 * (Vector3::Dot(-v, normal) * Vector3::Dot(l, normal)) + BRDF::Lambert(kd, m_Albedo) };
 		}
 		
 	private:
