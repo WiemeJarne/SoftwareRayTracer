@@ -65,6 +65,7 @@ namespace dae
 			return HitTest_Sphere(sphere, ray, temp, true);
 		}
 #pragma endregion
+
 #pragma region Plane HitTest
 		//PLANE HIT-TESTS
 		inline bool HitTest_Plane(const Plane& plane, const Ray& ray, HitRecord& hitRecord, bool ignoreHitRecord = false)
@@ -95,6 +96,7 @@ namespace dae
 			return HitTest_Plane(plane, ray, temp, true);
 		}
 #pragma endregion
+
 #pragma region Triangle HitTest
 		//TRIANGLE HIT-TESTS
 		inline bool HitTest_Triangle(const Triangle& triangle, const Ray& ray, HitRecord& hitRecord, bool ignoreHitRecord = false)
@@ -114,37 +116,49 @@ namespace dae
 				if (triangle.cullMode == TriangleCullMode::FrontFaceCulling && normalDotViewRay < 0) return false;
 			}
 
-			if (normalDotViewRay == 0.f) return false;
+			const Vector3 v0MinusV1{ triangle.v0 - triangle.v1 };
+			const Vector3 v0MinusV2{ triangle.v0 - triangle.v2 };
 
-			const Vector3 edge1{ triangle.v1 - triangle.v0 };
-			const Vector3 edge2{ triangle.v2 - triangle.v0 };
-			const Vector3 h{ Vector3::Cross(ray.direction, edge2) };
+			Matrix A{ Vector3{v0MinusV1.x, v0MinusV2.x, ray.direction.x},
+					  Vector3{v0MinusV1.y, v0MinusV2.y, ray.direction.y},
+					  Vector3{v0MinusV1.z, v0MinusV2.z, ray.direction.z},
+						 Vector3{} };
 
-			const float f{ 1.f / Vector3::Dot(edge1, h) };
-			const Vector3 s{ ray.origin - triangle.v0 };
-			const float u{ f * Vector3::Dot(s, h) };
-			if (u < 0.f || u > 1.f) return false;
+			const float determinantA{ A.Determinant() };
 
-			const Vector3 q{ Vector3::Cross(s, edge1) };
-			const float v{ f * Vector3::Dot(ray.direction, q) };
-			if (v < 0.f || (u + v) > 1.f) return false;
+			const Vector3 v0MinusRayOrigin{ triangle.v0 - ray.origin };
 
-			const float t{ f * Vector3::Dot(edge2, q) };
-			if (t < ray.max && t > ray.min && t < hitRecord.t)
-			{
-				if (ignoreHitRecord) return true;
+			const float t{ Matrix{ Vector3{v0MinusV1.x, v0MinusV2.x, v0MinusRayOrigin.x},
+								   Vector3{v0MinusV1.y, v0MinusV2.y, v0MinusRayOrigin.y},
+								   Vector3{v0MinusV1.z, v0MinusV2.z, v0MinusRayOrigin.z},
+									  Vector3{} }.Determinant() / determinantA };
 
-				hitRecord.didHit = true;
-				hitRecord.materialIndex = triangle.materialIndex;
-				hitRecord.normal = triangle.normal;
-				hitRecord.origin = ray.origin + t * ray.direction;
-				hitRecord.t = t;
-				hitRecord.materialType = triangle.materialType;
+			if (t < ray.min || t > ray.max) return false;
 
-				return true;
-			}
+			const float gamma{ Matrix{ Vector3{v0MinusV1.x, v0MinusRayOrigin.x, ray.direction.x},
+									   Vector3{v0MinusV1.y, v0MinusRayOrigin.y, ray.direction.y},
+									   Vector3{v0MinusV1.z, v0MinusRayOrigin.z, ray.direction.z},
+										  Vector3{} }.Determinant() / determinantA };
 
-			return false;
+			if (gamma < 0 || gamma > 1) return false;
+
+			const float beta{ Matrix{ Vector3{v0MinusRayOrigin.x, v0MinusV2.x, ray.direction.x},
+									  Vector3{v0MinusRayOrigin.y, v0MinusV2.y, ray.direction.y},
+									  Vector3{v0MinusRayOrigin.z, v0MinusV2.z, ray.direction.z},
+										 Vector3{} }.Determinant() / determinantA };
+
+			if (beta < 0 || beta >(1 - gamma)) return false;
+
+			if (ignoreHitRecord) return true;
+
+			hitRecord.didHit = true;
+			hitRecord.materialIndex = triangle.materialIndex;
+			hitRecord.normal = triangle.normal;
+			hitRecord.origin = ray.origin + t * ray.direction;
+			hitRecord.t = t;
+			hitRecord.materialType = triangle.materialType;
+
+			return true;
 		}
 
 		inline bool HitTest_Triangle(const Triangle& triangle, const Ray& ray)
@@ -157,25 +171,67 @@ namespace dae
 #pragma region TriangleMesh SlabTest
 		inline bool SlabTest_TriangleMesh(const TriangleMesh& mesh, const Ray& ray)
 		{
-			float tX1{ (mesh.transformedMinAABB.x - ray.origin.x) / ray.direction.x };
-			float tX2{ (mesh.transformedMaxAABB.x - ray.origin.x) / ray.direction.x };
+			//Smits’ algorithm
+			//source: https://www.researchgate.net/publication/220494140_An_Efficient_and_Robust_Ray-Box_Intersection_Algorithm
 
-			float tMin{ std::min(tX1, tX2) };
-			float tMax{ std::max(tX1, tX2) };
+			const Vector3 minAABB{ mesh.transformedMinAABB };
+			const Vector3 maxAABB{ mesh.transformedMaxAABB };
 
-			float tY1{ (mesh.transformedMinAABB.y - ray.origin.y) / ray.direction.y };
-			float tY2{ (mesh.transformedMaxAABB.y - ray.origin.y) / ray.direction.y };
+			float tMin{}, tMax{};
+			const float divX{ 1.f / ray.direction.x };
 
-			tMin = std::max(tMin, std::min(tY1, tY2));
-			tMax = std::max(tMax, std::min(tY1, tY2));
+			if (ray.direction.x >= 0)
+			{
+				tMin = (minAABB.x - ray.origin.x) * divX; //multiplying twice is faster the dividing twice
+				tMax = (maxAABB.x - ray.origin.x) * divX;
+			}
+			else
+			{
+				tMin = (maxAABB.x - ray.origin.x) * divX;
+				tMax = (minAABB.x - ray.origin.x) * divX;
+			}
 
-			float tZ1{ (mesh.transformedMinAABB.z - ray.origin.z) / ray.direction.z };
-			float tZ2{ (mesh.transformedMaxAABB.z - ray.origin.z) / ray.direction.z };
+			float tYMin{}, tYMax{};
+			const float divY{ 1.f / ray.direction.y };
 
-			tMin = std::max(tMin, std::min(tZ1, tZ2));
-			tMax = std::min(tMax, std::min(tZ1, tZ2));
+			if (ray.direction.y >= 0)
+			{
+				tYMin = (minAABB.y - ray.origin.y) * divY;
+				tYMax = (maxAABB.y - ray.origin.y) * divY;
+			}
+			else
+			{
+				tYMin = (maxAABB.y - ray.origin.y) * divY;
+				tYMax = (minAABB.y - ray.origin.y) * divY;
+			}
 
-			return tMax > 0 && tMax >= tMin;
+			if (tMin > tYMax || tYMin > tMax) return false;
+
+			if (tYMin > tMin) tMin = tYMin;
+
+			if (tYMax < tMax) tMax = tYMax;
+
+			float tZMin{}, tZMax{};
+			const float divZ{ 1.f / ray.direction.z };
+
+			if (ray.direction.z >= 0)
+			{
+				tZMin = (minAABB.z - ray.origin.z) * divZ;
+				tZMax = (maxAABB.z - ray.origin.z) * divZ;
+			}
+			else
+			{
+				tZMin = (maxAABB.z - ray.origin.z) * divZ;
+				tZMax = (minAABB.z - ray.origin.z) * divZ;
+			}
+
+			if (tMin > tZMax || tZMin > tMax) return false;
+
+			if (tZMin > tMin) tMin = tZMin;
+
+			if (tZMax < tMax) tMax = tZMax;
+
+			return tMin < ray.max&& tMax > ray.min;
 		}
 #pragma endregion
 

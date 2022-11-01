@@ -25,6 +25,7 @@ namespace dae {
 		Vector3 TransformPoint(const Vector3& p) const;
 		Vector3 TransformPoint(float x, float y, float z) const;
 		const Matrix& Transpose();
+		float Determinant();
 
 		Vector3 GetAxisX() const;
 		Vector3 GetAxisY() const;

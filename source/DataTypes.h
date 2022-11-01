@@ -184,7 +184,7 @@ namespace dae
 
 		void UpdateAABB()
 		{
-			if (positions.size() > 0)
+			if (!positions.empty())
 			{
 				minAABB = positions[0];
 				maxAABB = positions[0];

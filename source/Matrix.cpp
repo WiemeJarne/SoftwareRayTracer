@@ -74,6 +74,16 @@ namespace dae {
 		return *this;
 	}
 
+	float Matrix::Determinant()
+	{
+		return
+		{
+			data[0].x * (data[1].y * data[2].z - data[1].z * data[2].y)
+			- data[0].y * (data[1].x * data[2].z - data[1].z * data[2].x)
+			+ data[0].z * (data[1].x * data[2].y - data[1].y * data[2].x)
+		};
+	}
+
 	Matrix Matrix::Transpose(const Matrix& m)
 	{
 		Matrix out{ m };

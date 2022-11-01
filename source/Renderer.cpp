@@ -3,6 +3,10 @@
 #include "SDL_surface.h"
 #include <future> //async
 #include <ppl.h> //parallel_for
+#include <boost/asio/thread_pool.hpp> //thread_pool
+#include <boost/asio/post.hpp> //thread_pool
+
+//source boost: https://www.boost.org/users/download/
 
 //Project includes
 #include "Renderer.h"
@@ -15,6 +19,7 @@ using namespace dae;
 
 //#define ASYNC
 #define PARALLEL_FOR
+//#define THREAD_POOL
 
 Renderer::Renderer(SDL_Window * pWindow) :
 	m_pWindow(pWindow),
@@ -42,6 +47,8 @@ void Renderer::Render(Scene* pScene) const
 
 	const uint32_t amountOfPixels = m_Width * m_Height;
 
+	
+
 #if defined(ASYNC)
 	//Async Logic
 	const uint32_t amountOfCores{ std::thread::hardware_concurrency() };
@@ -50,7 +57,7 @@ void Renderer::Render(Scene* pScene) const
 	uint32_t amountOfUnassignedPixels{ amountOfPixels % amountOfCores };
 	uint32_t currentPixelIndex{};
 
-	for (uint32_t coreId{ 0 }; coreId < amountOfCores; ++coreId)
+	for (uint32_t coreId{}; coreId < amountOfCores; ++coreId)
 	{
 		uint32_t taskSize{ amountOfPixelsPerTask };
 		if (amountOfUnassignedPixels > 0)
@@ -79,11 +86,45 @@ void Renderer::Render(Scene* pScene) const
 	}
 
 #elif defined(PARALLEL_FOR)
-	//Parallel-For logic
 	concurrency::parallel_for(0u, amountOfPixels, [=, this](int index)
 		{
 			RenderPixel(pScene, index, fov, aspectRatio, camera, lights, solidColorMaterials, lambertMaterials, lambertPhongMaterials, cookTorrenceMaterials);
 		});
+
+#elif defined(THREAD_POOL)
+
+	const uint32_t amountOfCores{ std::thread::hardware_concurrency() };
+
+	boost::asio::thread_pool m_ThreadPool(amountOfCores);
+	
+	const uint32_t amountOfPixelsPerTask{ amountOfPixels / amountOfCores };
+	uint32_t amountOfUnassignedPixels{ amountOfPixels % amountOfCores };
+	uint32_t currentPixelIndex{};
+
+	for (uint32_t coreId{}; coreId < amountOfCores; ++coreId)
+	{
+		uint32_t taskSize{ amountOfPixelsPerTask };
+		if (amountOfUnassignedPixels > 0)
+		{
+			++taskSize;
+			--amountOfUnassignedPixels;
+		}
+
+		boost::asio::post(m_ThreadPool, [=, this]
+			{
+				//render all pixels for this task (currentPixelIndex > currentPixelIndex + taskSize)
+				const uint32_t lastPixelIndex{ currentPixelIndex + taskSize };
+				for (uint32_t pixelIndex{ currentPixelIndex }; pixelIndex < lastPixelIndex; ++pixelIndex)
+				{
+					RenderPixel(pScene, pixelIndex, fov, aspectRatio, camera, lights, solidColorMaterials, lambertMaterials, lambertPhongMaterials, cookTorrenceMaterials);
+				}
+			});
+
+		currentPixelIndex += taskSize;
+	}
+
+	//wait for all tasks in the pool to complete
+	m_ThreadPool.join();
 
 #else
 	//Synchronous Logic (no threading)
