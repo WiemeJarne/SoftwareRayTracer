@@ -65,6 +65,18 @@ namespace dae
 		MaterialType materialType{};
 	};
 
+	struct AABB
+	{
+		Vector3 min{ INFINITY, INFINITY, INFINITY };
+		Vector3 max{ -INFINITY, -INFINITY, -INFINITY };
+
+		void grow(Vector3 position)
+		{
+			min = Vector3::Min(min, position);
+			max = Vector3::Max(max, position);
+		}
+	};
+
 	struct TriangleMesh
 	{
 		TriangleMesh() = default;

@@ -15,14 +15,6 @@ namespace dae {
 
 	Scene::~Scene()
 	{
-		/*for(auto& pMaterial : m_Materials)
-		{
-			delete pMaterial;
-			pMaterial = nullptr;
-		}
-
-		m_Materials.clear();*/
-
 		for (auto& pMaterial : m_SolidColorMaterials)
 		{
 			delete pMaterial;
@@ -54,13 +46,11 @@ namespace dae {
 
 	void dae::Scene::GetClosestHit(const Ray& ray, HitRecord& closestHit) const
 	{
-		//todo W1
-
 		const size_t amountOfSpheres{ m_SphereGeometries.size() };
 		for (size_t index{}; index < amountOfSpheres; ++index)
 		{
 			GeometryUtils::HitTest_Sphere(m_SphereGeometries[index], ray, closestHit);
-			
+
 		}
 
 		const size_t amountOfPlanes{ m_PlaneGeometries.size() };
@@ -69,10 +59,13 @@ namespace dae {
 			GeometryUtils::HitTest_Plane(m_PlaneGeometries[index], ray, closestHit);
 		}
 
-		const size_t amountOfTrianglesMeshes{ m_TriangleMeshGeometries.size() };
-		for(size_t index{}; index < amountOfTrianglesMeshes; ++index)
+		if (GeometryUtils::SlabTest_TriangleMesh(m_AABB.min, m_AABB.max, ray))
 		{
-			GeometryUtils::HitTest_TriangleMesh(m_TriangleMeshGeometries[index], ray, closestHit);
+			const size_t amountOfTrianglesMeshes{ m_TriangleMeshGeometries.size() };
+			for (size_t index{}; index < amountOfTrianglesMeshes; ++index)
+			{
+				GeometryUtils::HitTest_TriangleMesh(m_TriangleMeshGeometries[index], ray, closestHit);
+			}
 		}
 	}
 
@@ -99,15 +92,17 @@ namespace dae {
 			}
 		}
 
-		const size_t amountOfTriangles{ m_TriangleMeshGeometries.size() };
-		for(size_t index{}; index < amountOfTriangles; ++index)
+		if (GeometryUtils::SlabTest_TriangleMesh(m_AABB.min, m_AABB.max, ray))
 		{
-			if (GeometryUtils::HitTest_TriangleMesh(m_TriangleMeshGeometries[index], ray, closestHit, true))
+			const size_t amountOfTriangles{ m_TriangleMeshGeometries.size() };
+			for (size_t index{}; index < amountOfTriangles; ++index)
 			{
-				return true;
+				if (GeometryUtils::HitTest_TriangleMesh(m_TriangleMeshGeometries[index], ray, closestHit, true))
+				{
+					return true;
+				}
 			}
 		}
-
 		return false;
 	}
 
@@ -272,7 +267,7 @@ namespace dae {
 		//const auto matLambertPhong1 = AddMaterialLambertPhong(new Material_LambertPhong(colors::Blue, 0.5f, 0.5f, 3.f));
 		//const auto matLambertPhong2 = AddMaterialLambertPhong(new Material_LambertPhong(colors::Blue, 0.5f, 0.5f, 15.f));
 		//const auto matLambertPhong3 = AddMaterialLambertPhong(new Material_LambertPhong(colors::Blue, 0.5f, 0.5f, 50.f));
-		
+
 		//AddSphere(Vector3{ -1.75f, 1.f, 0.f }, .75f, MaterialType::lambertPhong, matLambertPhong1);
 		//AddSphere(Vector3{ 0.f, 1.f, 0.f }, .75f, MaterialType::lambertPhong, matLambertPhong2);
 		//AddSphere(Vector3{ 1.75f, 1.f, 0.f }, .75f, MaterialType::lambertPhong, matLambertPhong3);
@@ -362,7 +357,7 @@ namespace dae {
 			pMesh->normals,
 			pMesh->indices);
 
-		pMesh->Scale({.7f, .7f, .7f});
+		pMesh->Scale({ .7f, .7f, .7f });
 		pMesh->Translate({ 0.f, 1.f, 0.f });
 
 		pMesh->UpdateTransforms();
@@ -416,19 +411,19 @@ namespace dae {
 
 		//TriangleMesh
 		const Triangle baseTriangle{ Vector3{-0.75f, 1.5f, 0.f}, Vector3{.75f, 0.f, 0.f}, Vector3{-.75f, 0.f, 0.f} };
-		
+
 		m_Meshes[0] = AddTriangleMesh(TriangleCullMode::BackFaceCulling, MaterialType::lambert, matLambert_White);
 		m_Meshes[0]->AppendTriangle(baseTriangle, true);
 		m_Meshes[0]->Translate({ -1.75f, 4.5f, 0.f });
 		m_Meshes[0]->UpdateAABB();
 		m_Meshes[0]->UpdateTransforms();
-		
+
 		m_Meshes[1] = AddTriangleMesh(TriangleCullMode::FrontFaceCulling, MaterialType::lambert, matLambert_White);
 		m_Meshes[1]->AppendTriangle(baseTriangle, true);
 		m_Meshes[1]->Translate({ 0.f, 4.5f, 0.f });
 		m_Meshes[1]->UpdateAABB();
 		m_Meshes[1]->UpdateTransforms();
-		
+
 		m_Meshes[2] = AddTriangleMesh(TriangleCullMode::NoCulling, MaterialType::lambert, matLambert_White);
 		m_Meshes[2]->AppendTriangle(baseTriangle, true);
 		m_Meshes[2]->Translate({ 1.75f, 4.5f, 0.f });
@@ -444,12 +439,14 @@ namespace dae {
 	void Scene_W4_ReferenceScene::Update(Timer* pTimer)
 	{
 		Scene::Update(pTimer);
-		
+
 		const auto yawAngle = (cos(pTimer->GetTotal()) + 1.f) / 2.f * PI_2;
-		for(const auto m : m_Meshes)
+		for (const auto m : m_Meshes)
 		{
 			m->RotateY(yawAngle);
 			m->UpdateTransforms();
+			m_AABB.grow(m->transformedMinAABB);
+			m_AABB.grow(m->transformedMaxAABB);
 		}
 	}
 #pragma endregion

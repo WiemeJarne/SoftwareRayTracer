@@ -233,6 +233,71 @@ namespace dae
 
 			return tMin < ray.max&& tMax > ray.min;
 		}
+
+		inline bool SlabTest_TriangleMesh(Vector3 min, Vector3 max, const Ray& ray)
+		{
+			//Smits’ algorithm
+			//source: https://www.researchgate.net/publication/220494140_An_Efficient_and_Robust_Ray-Box_Intersection_Algorithm
+
+			const Vector3 minAABB{ min };
+			const Vector3 maxAABB{ max };
+
+			float tMin{}, tMax{};
+			const float divX{ 1.f / ray.direction.x };
+
+			if (ray.direction.x >= 0)
+			{
+				tMin = (minAABB.x - ray.origin.x) * divX; //multiplying twice is faster the dividing twice
+				tMax = (maxAABB.x - ray.origin.x) * divX;
+			}
+			else
+			{
+				tMin = (maxAABB.x - ray.origin.x) * divX;
+				tMax = (minAABB.x - ray.origin.x) * divX;
+			}
+
+			float tYMin{}, tYMax{};
+			const float divY{ 1.f / ray.direction.y };
+
+			if (ray.direction.y >= 0)
+			{
+				tYMin = (minAABB.y - ray.origin.y) * divY;
+				tYMax = (maxAABB.y - ray.origin.y) * divY;
+			}
+			else
+			{
+				tYMin = (maxAABB.y - ray.origin.y) * divY;
+				tYMax = (minAABB.y - ray.origin.y) * divY;
+			}
+
+			if (tMin > tYMax || tYMin > tMax) return false;
+
+			if (tYMin > tMin) tMin = tYMin;
+
+			if (tYMax < tMax) tMax = tYMax;
+
+			float tZMin{}, tZMax{};
+			const float divZ{ 1.f / ray.direction.z };
+
+			if (ray.direction.z >= 0)
+			{
+				tZMin = (minAABB.z - ray.origin.z) * divZ;
+				tZMax = (maxAABB.z - ray.origin.z) * divZ;
+			}
+			else
+			{
+				tZMin = (maxAABB.z - ray.origin.z) * divZ;
+				tZMax = (minAABB.z - ray.origin.z) * divZ;
+			}
+
+			if (tMin > tZMax || tZMin > tMax) return false;
+
+			if (tZMin > tMin) tMin = tZMin;
+
+			if (tZMax < tMax) tMax = tZMax;
+
+			return tMin < ray.max&& tMax > ray.min;
+		}
 #pragma endregion
 
 #pragma region TriangeMesh HitTest
