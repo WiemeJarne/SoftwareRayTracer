@@ -293,4 +293,28 @@ namespace dae
 		MaterialType materialType;
 	};
 #pragma endregion
+#pragma region BVH
+	//source for bvh: https://jacco.ompf2.com/2022/04/13/how-to-build-a-bvh-part-1-basics/
+	struct BVHNode
+	{
+		float AABBMin, AABBMax;
+		Uint32 leftChild, rightChild;
+		Uint32 firstMesh, amountOfMeshes;
+	};
+
+	struct BHV
+	{
+		BVHNode bvhNode[0]{};
+		Uint32 rootNodeIndex = 0, nodesUsed = 1;
+
+		void BuildBVH(BVHNode node, int amountOfTriangle)
+		{
+			bvhNode = node;
+			BVHNode& root = bvhNode[rootNodeIndex];
+
+		}
+	};
+
+	
+#pragma endregion
 }
