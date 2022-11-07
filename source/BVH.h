@@ -1,22 +1,14 @@
-#include <cassert>
+//#include <cassert>
 
-#include "Math.h"
 #include "vector"
+#include "Math.h"
 
 class BVH
 {
 public:
-	BVH(int amountOfTriangles);
+	BVH(int amountOfTriangles, std::vector<Vector3>& centers, std::vector<Vector3>& positions);
 
 private:
-	struct Tri { float3 vertex0, vertex1, vertex2; float3 centroid; };
-	__declspec(align(32)) struct BVHNode
-	{
-		float3 aabbMin, aabbMax;
-		uint leftFirst, triCount;
-		bool isLeaf() { return triCount > 0; }
-	};
-
 	struct BVHNode
 	{
 		float AABBMin, AABBMax;

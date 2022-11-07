@@ -53,7 +53,6 @@
     <ClInclude Include="DataTypes.h">
       <Filter>Misc</Filter>
     </ClInclude>
-    <ClInclude Include="BVH.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
@@ -71,9 +70,6 @@
       <Filter>Misc</Filter>
     </ClCompile>
     <ClCompile Include="Timer.cpp">
-      <Filter>Misc</Filter>
-    </ClCompile>
-    <ClCompile Include="BVH.cpp">
       <Filter>Misc</Filter>
     </ClCompile>
   </ItemGroup>

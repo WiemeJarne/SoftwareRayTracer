@@ -97,6 +97,7 @@ namespace dae
 		}
 
 		std::vector<Vector3> positions{};
+		std::vector<Vector3> centers{};
 		std::vector<Vector3> normals{};
 		std::vector<int> indices{};
 		unsigned char materialIndex{};
@@ -295,25 +296,55 @@ namespace dae
 #pragma endregion
 #pragma region BVH
 	//source for bvh: https://jacco.ompf2.com/2022/04/13/how-to-build-a-bvh-part-1-basics/
-	struct BVHNode
+	/*struct BVHNode
 	{
 		float AABBMin, AABBMax;
-		Uint32 leftChild, rightChild;
-		Uint32 firstMesh, amountOfMeshes;
-	};
+		Uint32 leftChild;
+		Uint32 rightChild;
+		Uint32 firstMesh;
+		Uint32 amountOfMeshes;
+	};*/
 
-	struct BHV
-	{
-		BVHNode bvhNode[0]{};
-		Uint32 rootNodeIndex = 0, nodesUsed = 1;
+	//struct BHV
+	//{
+	//	BVHNode* bvhNode;
+	//	Uint32 rootNodeIndex = 0, nodesUsed = 1;
 
-		void BuildBVH(BVHNode node, int amountOfTriangle)
-		{
-			bvhNode = node;
-			BVHNode& root = bvhNode[rootNodeIndex];
+	//	void BuildBVH(std::vector<Vector3>& centers, const std::vector<Vector3>& positions, const std::vector<int>& indices)
+	//	{
+	//		bvhNode = new BVHNode[indices.size() * 2 - 1];
+	//		int positionIndex{};
+	//		for (int triangleIndex{}; triangleIndex < indices.size(); ++triangleIndex)
+	//		{
+	//			centers[triangleIndex] = (positions[positionIndex] + positions[positionIndex + 1] + positions[positionIndex + 2]) * 0.3333f;
+	//			positionIndex += 3;
+	//		}
 
-		}
-	};
+	//		//assign all triangles to root node
+	//		BVHNode& root = bvhNode[rootNodeIndex];
+	//		root.leftChild = root.rightChild = 0;
+	//		root.firstMesh = 0;
+	//		root.amountOfMeshes = 0;
+	//		UpdateNodeBounds(rootNodeIndex, positions);
+
+	//		//subdivide recursively
+	//		Subdivide(rootNodeIndex);
+	//	}
+
+	//	void UpdateNodeBounds(Uint32 nodeIndex, const std::vector<Vector3>& positions, const std::vector<int>& indices)
+	//	{
+	//		BVHNode& node = bvhNode[nodeIndex];
+	//		node.AABBMin = INFINITY;
+	//		node.AABBMax = -INFINITY;
+
+	//		Uint32 first{ node.firstMesh };
+	//		for (int index{}; index < node.amountOfMeshes; ++index)
+	//		{
+	//			const int triangleIndex{ first + index };
+	//			node.AABBMin = fminf(node.AABBMin, positions[indices[triangleIndex]])
+	//		}
+	//	}
+	//};
 
 	
 #pragma endregion
