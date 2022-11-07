@@ -122,7 +122,7 @@ namespace dae
 			Matrix A{ Vector3{v0MinusV1.x, v0MinusV2.x, ray.direction.x},
 					  Vector3{v0MinusV1.y, v0MinusV2.y, ray.direction.y},
 					  Vector3{v0MinusV1.z, v0MinusV2.z, ray.direction.z},
-						 Vector3{} };
+					  Vector3{}											 };
 
 			const float determinantA{ A.Determinant() };
 
@@ -131,21 +131,21 @@ namespace dae
 			const float t{ Matrix{ Vector3{v0MinusV1.x, v0MinusV2.x, v0MinusRayOrigin.x},
 								   Vector3{v0MinusV1.y, v0MinusV2.y, v0MinusRayOrigin.y},
 								   Vector3{v0MinusV1.z, v0MinusV2.z, v0MinusRayOrigin.z},
-									  Vector3{} }.Determinant() / determinantA };
+								   Vector3{} }.Determinant() / determinantA				 };
 
 			if (t < ray.min || t > ray.max) return false;
 
 			const float gamma{ Matrix{ Vector3{v0MinusV1.x, v0MinusRayOrigin.x, ray.direction.x},
 									   Vector3{v0MinusV1.y, v0MinusRayOrigin.y, ray.direction.y},
 									   Vector3{v0MinusV1.z, v0MinusRayOrigin.z, ray.direction.z},
-										  Vector3{} }.Determinant() / determinantA };
+									   Vector3{} }.Determinant() / determinantA					 };
 
 			if (gamma < 0 || gamma > 1) return false;
 
 			const float beta{ Matrix{ Vector3{v0MinusRayOrigin.x, v0MinusV2.x, ray.direction.x},
 									  Vector3{v0MinusRayOrigin.y, v0MinusV2.y, ray.direction.y},
 									  Vector3{v0MinusRayOrigin.z, v0MinusV2.z, ray.direction.z},
-										 Vector3{} }.Determinant() / determinantA };
+									  Vector3{} }.Determinant() / determinantA					};
 
 			if (beta < 0 || beta >(1 - gamma)) return false;
 
@@ -169,71 +169,6 @@ namespace dae
 #pragma endregion
 
 #pragma region TriangleMesh SlabTest
-		inline bool SlabTest_TriangleMesh(const TriangleMesh& mesh, const Ray& ray)
-		{
-			//Smits’ algorithm
-			//source: https://www.researchgate.net/publication/220494140_An_Efficient_and_Robust_Ray-Box_Intersection_Algorithm
-
-			const Vector3 minAABB{ mesh.transformedMinAABB };
-			const Vector3 maxAABB{ mesh.transformedMaxAABB };
-
-			float tMin{}, tMax{};
-			const float divX{ 1.f / ray.direction.x };
-
-			if (ray.direction.x >= 0)
-			{
-				tMin = (minAABB.x - ray.origin.x) * divX; //multiplying twice is faster the dividing twice
-				tMax = (maxAABB.x - ray.origin.x) * divX;
-			}
-			else
-			{
-				tMin = (maxAABB.x - ray.origin.x) * divX;
-				tMax = (minAABB.x - ray.origin.x) * divX;
-			}
-
-			float tYMin{}, tYMax{};
-			const float divY{ 1.f / ray.direction.y };
-
-			if (ray.direction.y >= 0)
-			{
-				tYMin = (minAABB.y - ray.origin.y) * divY;
-				tYMax = (maxAABB.y - ray.origin.y) * divY;
-			}
-			else
-			{
-				tYMin = (maxAABB.y - ray.origin.y) * divY;
-				tYMax = (minAABB.y - ray.origin.y) * divY;
-			}
-
-			if (tMin > tYMax || tYMin > tMax) return false;
-
-			if (tYMin > tMin) tMin = tYMin;
-
-			if (tYMax < tMax) tMax = tYMax;
-
-			float tZMin{}, tZMax{};
-			const float divZ{ 1.f / ray.direction.z };
-
-			if (ray.direction.z >= 0)
-			{
-				tZMin = (minAABB.z - ray.origin.z) * divZ;
-				tZMax = (maxAABB.z - ray.origin.z) * divZ;
-			}
-			else
-			{
-				tZMin = (maxAABB.z - ray.origin.z) * divZ;
-				tZMax = (minAABB.z - ray.origin.z) * divZ;
-			}
-
-			if (tMin > tZMax || tZMin > tMax) return false;
-
-			if (tZMin > tMin) tMin = tZMin;
-
-			if (tZMax < tMax) tMax = tZMax;
-
-			return tMin < ray.max&& tMax > ray.min;
-		}
-
 		inline bool SlabTest_TriangleMesh(Vector3 min, Vector3 max, const Ray& ray)
 		{
 			//Smits’ algorithm
@@ -298,6 +233,11 @@ namespace dae
 
 			return tMin < ray.max&& tMax > ray.min;
 		}
+
+		inline bool SlabTest_TriangleMesh(const TriangleMesh& mesh, const Ray& ray)
+		{
+			return SlabTest_TriangleMesh(mesh.transformedMinAABB, mesh.transformedMaxAABB, ray);
+		}
 #pragma endregion
 
 #pragma region TriangeMesh HitTest
@@ -325,13 +265,8 @@ namespace dae
 				triangle.v1 = mesh.transformedPositions[mesh.indices[index]];
 				++index;
 				triangle.v2 = mesh.transformedPositions[mesh.indices[index]];
-
-				if (ignoreHitRecord)
-				{
-					if (HitTest_Triangle(triangle, ray, hitRecord, ignoreHitRecord)) return true;
-				}
-
-				HitTest_Triangle(triangle, ray, tempClosestHit, ignoreHitRecord);
+			
+				if (HitTest_Triangle(triangle, ray, hitRecord, ignoreHitRecord) && ignoreHitRecord) return true;
 
 				if (tempClosestHit.t < hitRecord.t)
 				{
@@ -339,12 +274,7 @@ namespace dae
 				}
 			}
 
-			if (hitRecord.didHit)
-			{
-				return true;
-			}
-
-			return false;
+			return hitRecord.didHit;
 		}
 
 		inline bool HitTest_TriangleMesh(const TriangleMesh& mesh, const Ray& ray)

@@ -3,8 +3,9 @@
 #include "SDL_surface.h"
 #include <future> //async
 #include <ppl.h> //parallel_for
-#include <boost/asio/thread_pool.hpp> //thread_pool
-#include <boost/asio/post.hpp> //thread_pool
+//to use thread_pool uncomment the next 2 #includes and unzip boost_1_80_0.7z found in the lib folder
+//#include <boost/asio/thread_pool.hpp> //thread_pool
+//#include <boost/asio/post.hpp> //thread_pool
 
 //source boost: https://www.boost.org/users/download/
 
@@ -19,7 +20,7 @@ using namespace dae;
 
 //#define ASYNC
 #define PARALLEL_FOR
-//#define THREAD_POOL
+//#define THREAD_POOL //to use thread_pool uncomment the 2 commmented #includes at the top of this file and unzip boost_1_80_0.7z found in the lib folder
 
 Renderer::Renderer(SDL_Window * pWindow) :
 	m_pWindow(pWindow),
