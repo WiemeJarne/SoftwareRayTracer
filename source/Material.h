@@ -93,7 +93,7 @@ namespace dae
 			 
 			const ColorRGB kd = (m_Metalness == 0.f) ? ColorRGB{ 1.f, 1.f, 1.f } - fersnel : ColorRGB{0.f, 0.f, 0.f};
 
-			return { fng / 4 * (Vector3::Dot(-v, normal) * Vector3::Dot(l, normal)) + BRDF::Lambert(kd, m_Albedo) };
+			return { fng / (4 * (Vector3::Dot(-v, normal) * Vector3::Dot(l, normal))) + BRDF::Lambert(kd, m_Albedo) };
 		}
 		
 	private:
