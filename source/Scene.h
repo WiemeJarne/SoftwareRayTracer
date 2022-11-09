@@ -182,6 +182,7 @@ namespace dae
 		Scene_W4_BunnyScene& operator=(Scene_W4_BunnyScene&&) noexcept = delete;
 
 		void Initialize() override;
+		void Update(Timer* pTimer) override;
 
 	private:
 		TriangleMesh* m_pMesh{ nullptr };

@@ -133,7 +133,7 @@ namespace dae
 								   Vector3{v0MinusV1.z, v0MinusV2.z, v0MinusRayOrigin.z},
 								   Vector3{} }.Determinant() / determinantA				 };
 
-			if (t < ray.min || t > ray.max) return false;
+			if (t < ray.min || t > ray.max || t > hitRecord.t) return false;
 
 			const float gamma{ Matrix{ Vector3{v0MinusV1.x, v0MinusRayOrigin.x, ray.direction.x},
 									   Vector3{v0MinusV1.y, v0MinusRayOrigin.y, ray.direction.y},
@@ -240,6 +240,44 @@ namespace dae
 		}
 #pragma endregion
 
+		inline bool IntersectBVH(const TriangleMesh& mesh, const Ray& ray, int nodeIndex, HitRecord& hitRecord, bool ignoreHitRecord = false)
+		{
+			const BVHNode& node{ mesh.bvhNodes[nodeIndex] };
+
+			if (!SlabTest_TriangleMesh(node.AABBMin, node.AABBMax, ray)) return false;
+
+			if (node.amountOfMeshes != 0)
+			{
+				HitRecord tempHitRecord{};
+
+				for (int index{}; index < node.amountOfMeshes; ++index)
+				{
+					Triangle triangle{};
+					triangle.cullMode = mesh.cullMode;
+					triangle.materialIndex = mesh.materialIndex;
+					triangle.materialType = mesh.materialType;
+					triangle.normal = mesh.transformedNormals[node.leftChildIndex + index];
+					triangle.v0 = mesh.transformedPositions[mesh.indices[(node.leftChildIndex + index) * 3]];
+					triangle.v1 = mesh.transformedPositions[mesh.indices[(node.leftChildIndex + index) * 3 + 1]];
+					triangle.v2 = mesh.transformedPositions[mesh.indices[(node.leftChildIndex + index) * 3 + 2]];
+
+					HitTest_Triangle(triangle, ray, tempHitRecord, ignoreHitRecord);
+
+					if (tempHitRecord.didHit && tempHitRecord.t < hitRecord.t)
+					{
+						hitRecord = tempHitRecord;
+					}
+				}
+
+				return tempHitRecord.didHit;
+			}
+			else
+			{
+				IntersectBVH(mesh, ray, node.leftChildIndex, hitRecord, ignoreHitRecord);
+				IntersectBVH(mesh, ray, node.leftChildIndex + 1, hitRecord, ignoreHitRecord); //leftChildIndex + 1 == rightChildIndex
+			}
+		}
+
 #pragma region TriangeMesh HitTest
 		inline bool HitTest_TriangleMesh(const TriangleMesh& mesh, const Ray& ray, HitRecord& hitRecord, bool ignoreHitRecord = false)
 		{
@@ -249,32 +287,7 @@ namespace dae
 				return false;
 			}
 
-			HitRecord tempClosestHit{};
-
-			const size_t amountOfIndices{ mesh.indices.size() };
-			for(size_t index{}; index < amountOfIndices - 1; ++index)
-			{
-				Triangle triangle{};
-				triangle.normal = mesh.transformedNormals[index / 3];
-				triangle.materialIndex = mesh.materialIndex;
-				triangle.materialType = mesh.materialType;
-				triangle.cullMode = mesh.cullMode;
-
-				triangle.v0 = mesh.transformedPositions[mesh.indices[index]];
-				++index;
-				triangle.v1 = mesh.transformedPositions[mesh.indices[index]];
-				++index;
-				triangle.v2 = mesh.transformedPositions[mesh.indices[index]];
-			
-				if (HitTest_Triangle(triangle, ray, hitRecord, ignoreHitRecord) && ignoreHitRecord) return true;
-
-				if (tempClosestHit.t < hitRecord.t)
-				{
-					hitRecord = tempClosestHit;
-				}
-			}
-
-			return hitRecord.didHit;
+			 return IntersectBVH(mesh, ray, mesh.rootNodeIndex, hitRecord, ignoreHitRecord);
 		}
 
 		inline bool HitTest_TriangleMesh(const TriangleMesh& mesh, const Ray& ray)

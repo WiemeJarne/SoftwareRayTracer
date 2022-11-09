@@ -1,8 +1,9 @@
 #pragma once
 #include <cassert>
-
+#include <iostream>
 #include "Math.h"
 #include "vector"
+#include <string>
 
 namespace dae
 {
@@ -12,6 +13,15 @@ namespace dae
 		lambert,
 		lambertPhong,
 		cookTorrence
+	};
+
+	struct BVHNode
+	{
+		Vector3 AABBMin;
+		Vector3 AABBMax;
+		int leftChildIndex; //rightChildIndex = leftChildIndex + 1
+		int firstMeshIndex;
+		int amountOfMeshes;
 	};
 
 #pragma region GEOMETRY
@@ -70,10 +80,16 @@ namespace dae
 		Vector3 min{ INFINITY, INFINITY, INFINITY };
 		Vector3 max{ -INFINITY, -INFINITY, -INFINITY };
 
-		void grow(Vector3 position)
+		void Grow(Vector3 position)
 		{
 			min = Vector3::Min(min, position);
 			max = Vector3::Max(max, position);
+		}
+
+		float Area()
+		{
+			Vector3 extent{ max - min };
+			return extent.x * extent.y + extent.y * extent.z + extent.z * extent.x;
 		}
 	};
 
@@ -97,7 +113,7 @@ namespace dae
 		}
 
 		std::vector<Vector3> positions{};
-		std::vector<Vector3> centers{};
+		std::vector<Vector3> centroids{};
 		std::vector<Vector3> normals{};
 		std::vector<int> indices{};
 		unsigned char materialIndex{};
@@ -118,6 +134,9 @@ namespace dae
 		std::vector<Vector3> transformedPositions{};
 		std::vector<Vector3> transformedNormals{};
 
+		std::vector<BVHNode> bvhNodes;
+		int rootNodeIndex{ 0 }, amountOfUsedNodes{ 1 };
+
 		void Translate(const Vector3& translation)
 		{
 			translationTransform = Matrix::CreateTranslation(translation);
@@ -135,15 +154,61 @@ namespace dae
 
 		void AppendTriangle(const Triangle& triangle, bool ignoreTransformUpdate = false)
 		{
-			int startIndex = static_cast<int>(positions.size());
+			int v0Index{ -1 };
+			int v1Index{ -1 };
+			int v2Index{ -1 };
 
-			positions.push_back(triangle.v0);
-			positions.push_back(triangle.v1);
-			positions.push_back(triangle.v2);
+			int amountOfPositions{ static_cast<int>(positions.size()) };
+			for (int index{}; index < amountOfPositions; ++index)
+			{
+				if (positions[index] == triangle.v0)
+				{
+					v0Index = index;
+				}
 
-			indices.push_back(startIndex);
-			indices.push_back(++startIndex);
-			indices.push_back(++startIndex);
+				if (positions[index] == triangle.v1)
+				{
+					v1Index = index;
+				}
+
+				if (positions[index] == triangle.v2)
+				{
+					v2Index = index;
+				}
+			}
+
+			if (v0Index != -1)
+			{
+				indices.push_back(v0Index);
+			}
+			else
+			{
+				int newIndex{ static_cast<int>(indices.size()) };
+				indices.push_back(newIndex);
+				positions.push_back(triangle.v0);
+			}
+
+			if (v1Index != -1)
+			{
+				indices.push_back(v1Index);
+			}
+			else
+			{
+				int newIndex{ static_cast<int>(indices.size()) };
+				indices.push_back(newIndex);
+				positions.push_back(triangle.v1);
+			}
+
+			if (v2Index != -1)
+			{
+				indices.push_back(v2Index);
+			}
+			else
+			{
+				int newIndex{ static_cast<int>(indices.size()) };
+				indices.push_back(newIndex);
+				positions.push_back(triangle.v2);
+			}
 
 			normals.push_back(triangle.normal);
 
@@ -191,7 +256,7 @@ namespace dae
 			const size_t amountOfNormals{ normals.size() };
 			for(size_t index{}; index < amountOfNormals; ++index)
 			{
-				transformedNormals.emplace_back(finalTransform.TransformVector(normals[index]));
+				transformedNormals.emplace_back(finalTransform.TransformVector(normals[index]).Normalized());
 			}
 		}
 
@@ -254,6 +319,171 @@ namespace dae
 			transformedMinAABB = tMinAABB;
 			transformedMaxAABB = tMaxAABB;
 		}
+
+		//bvh functions
+		//source for bvh: https://jacco.ompf2.com/2022/04/13/how-to-build-a-bvh-part-1-basics/
+		void BuildBVH()
+		{
+			int amountOfTriangles{ static_cast<int>(indices.size()) / 3 };
+
+			bvhNodes.reserve(amountOfTriangles * 2 - 1);
+			int maxAmountOfBVHNodes{ static_cast<int>(bvhNodes.capacity()) };
+			for (int index{}; index < maxAmountOfBVHNodes; ++index)
+			{
+				bvhNodes.push_back(BVHNode{});
+			}
+
+			//assign all triangles to root node
+			bvhNodes[rootNodeIndex].leftChildIndex = 0;
+			bvhNodes[rootNodeIndex].amountOfMeshes = amountOfTriangles;
+
+			UpdateNodeBounds(rootNodeIndex);
+			//subdivide recursively
+			Subdivide(rootNodeIndex);
+		}
+
+		void UpdateNodeBounds(int nodeIndex)
+		{
+			BVHNode& node{ bvhNodes[nodeIndex] };
+			node.AABBMin = { INFINITY, INFINITY, INFINITY };
+			node.AABBMax = { -INFINITY, -INFINITY, -INFINITY };
+
+			int start{ node.leftChildIndex * 3 };
+			int end{ start + node.amountOfMeshes * 3 };
+			
+			for (int index{ start }; index < end; ++index)
+			{
+				node.AABBMin = Vector3::Min(node.AABBMin, transformedPositions[indices[index]]);
+				node.AABBMax = Vector3::Max(node.AABBMax, transformedPositions[indices[index]]);
+			}
+		}
+
+		void Subdivide(int nodeIndex)
+		{
+			BVHNode& node{ bvhNodes[nodeIndex] };
+
+			int bestAxis{ -1 };
+			float bestPos{};
+			float bestCost{ INFINITY };
+
+			for (int axis{}; axis < 3; ++axis)
+			{
+				for (int index{}; index < node.amountOfMeshes; ++index)
+				{
+					const int triangleIndex{ node.leftChildIndex + index };
+					const Vector3 centroid
+					{
+						(  transformedPositions[indices[triangleIndex * 3]]
+						 + transformedPositions[indices[triangleIndex * 3 + 1]]
+						 + transformedPositions[indices[triangleIndex * 3 + 2]]) / 3.f
+					};
+
+					const float candidatePos{ centroid[axis] };
+					const float cost{ EvaluateSAH(node, axis, candidatePos) };
+
+					if (cost < bestCost)
+					{
+						bestAxis = axis;
+						bestPos = candidatePos;
+						bestCost = cost;
+					}
+				}
+			}
+
+			const Vector3 extentParent{ node.AABBMax - node.AABBMin };
+			const float areaParent{ extentParent.x * extentParent.y + extentParent.y * extentParent.z + extentParent.z * extentParent.x };
+			const float costParent{ node.amountOfMeshes * areaParent };
+
+			if (bestCost >= costParent) return;
+
+			int left{ node.leftChildIndex };
+			const int right{ left + node.amountOfMeshes - 1 };
+
+			SortPrimitives(left, right, bestAxis, bestPos);
+
+			int leftCount{ left - node.leftChildIndex };
+			if (leftCount == 0 || leftCount == node.amountOfMeshes) return;
+
+			//create child nodes
+			int leftChildIndex{ amountOfUsedNodes };
+			amountOfUsedNodes += 2;
+			bvhNodes[leftChildIndex].leftChildIndex = node.leftChildIndex;
+			bvhNodes[leftChildIndex].amountOfMeshes = leftCount;
+			bvhNodes[leftChildIndex + 1].leftChildIndex = left; //leftChildIndex + 1 == rightChildIndex (rightChildIndex is not saved in the node)
+			bvhNodes[leftChildIndex + 1].amountOfMeshes = node.amountOfMeshes - leftCount;
+
+			node.amountOfMeshes = 0;
+			node.leftChildIndex = leftChildIndex;
+
+			UpdateNodeBounds(leftChildIndex);
+			UpdateNodeBounds(leftChildIndex + 1);
+
+			//recurse
+			Subdivide(leftChildIndex);
+			Subdivide(leftChildIndex + 1);
+		}
+
+		float EvaluateSAH(const BVHNode& node, int axis, float position)
+		{
+			AABB leftBox{};
+			AABB rightBox{};
+			int leftCount{};
+			int rightCount{};
+
+			for (int index{}; index < node.amountOfMeshes; ++index)
+			{
+				const int triangleIndex{ node.leftChildIndex + index };
+				const Vector3 centroid
+				{
+					(  transformedPositions[indices[triangleIndex * 3]]
+					 + transformedPositions[indices[triangleIndex * 3 + 1]]
+					 + transformedPositions[indices[triangleIndex * 3 + 2]] ) / 3.f
+				};
+
+				if (centroid[axis] < position)
+				{
+					++leftCount;
+
+					leftBox.Grow(transformedPositions[indices[triangleIndex * 3]]);
+					leftBox.Grow(transformedPositions[indices[triangleIndex * 3 + 1]]);
+					leftBox.Grow(transformedPositions[indices[triangleIndex * 3 + 2]]);
+				}
+				else
+				{
+					++rightCount;
+
+					rightBox.Grow(transformedPositions[indices[triangleIndex * 3]]);
+					rightBox.Grow(transformedPositions[indices[triangleIndex * 3 + 1]]);
+					rightBox.Grow(transformedPositions[indices[triangleIndex * 3 + 2]]);
+				}
+			}
+			float cost{ leftCount * leftBox.Area() + rightCount * rightBox.Area() };
+			return cost > 0 ? cost : INFINITY;
+		}
+
+		void SortPrimitives(int& left, int right, int axis, float splitPosition)
+		{
+			while (left <= right)
+			{
+				const Vector3 centroid
+				{
+					(  transformedPositions[indices[left * 3]]
+					 + transformedPositions[indices[left * 3 + 1]]
+					 + transformedPositions[indices[left * 3 + 2]] ) / 3.f
+				};
+
+				if (centroid[axis] < splitPosition) ++left;
+				else
+				{
+					std::swap(normals[left], normals[right]);
+					std::swap(transformedNormals[left], transformedNormals[right]);
+					std::swap(indices[left * 3], indices[right * 3]);
+					std::swap(indices[left * 3 + 1], indices[right * 3 + 1]);
+					std::swap(indices[left * 3 + 2], indices[right * 3 + 2]);
+					--right;
+				}
+			}
+		}
 	};
 #pragma endregion
 #pragma region LIGHT
@@ -293,59 +523,5 @@ namespace dae
 		unsigned char materialIndex{ 0 };
 		MaterialType materialType;
 	};
-#pragma endregion
-#pragma region BVH
-	//source for bvh: https://jacco.ompf2.com/2022/04/13/how-to-build-a-bvh-part-1-basics/
-	/*struct BVHNode
-	{
-		float AABBMin, AABBMax;
-		Uint32 leftChild;
-		Uint32 rightChild;
-		Uint32 firstMesh;
-		Uint32 amountOfMeshes;
-	};*/
-
-	//struct BHV
-	//{
-	//	BVHNode* bvhNode;
-	//	Uint32 rootNodeIndex = 0, nodesUsed = 1;
-
-	//	void BuildBVH(std::vector<Vector3>& centers, const std::vector<Vector3>& positions, const std::vector<int>& indices)
-	//	{
-	//		bvhNode = new BVHNode[indices.size() * 2 - 1];
-	//		int positionIndex{};
-	//		for (int triangleIndex{}; triangleIndex < indices.size(); ++triangleIndex)
-	//		{
-	//			centers[triangleIndex] = (positions[positionIndex] + positions[positionIndex + 1] + positions[positionIndex + 2]) * 0.3333f;
-	//			positionIndex += 3;
-	//		}
-
-	//		//assign all triangles to root node
-	//		BVHNode& root = bvhNode[rootNodeIndex];
-	//		root.leftChild = root.rightChild = 0;
-	//		root.firstMesh = 0;
-	//		root.amountOfMeshes = 0;
-	//		UpdateNodeBounds(rootNodeIndex, positions);
-
-	//		//subdivide recursively
-	//		Subdivide(rootNodeIndex);
-	//	}
-
-	//	void UpdateNodeBounds(Uint32 nodeIndex, const std::vector<Vector3>& positions, const std::vector<int>& indices)
-	//	{
-	//		BVHNode& node = bvhNode[nodeIndex];
-	//		node.AABBMin = INFINITY;
-	//		node.AABBMax = -INFINITY;
-
-	//		Uint32 first{ node.firstMesh };
-	//		for (int index{}; index < node.amountOfMeshes; ++index)
-	//		{
-	//			const int triangleIndex{ first + index };
-	//			node.AABBMin = fminf(node.AABBMin, positions[indices[triangleIndex]])
-	//		}
-	//	}
-	//};
-
-	
 #pragma endregion
 }

@@ -53,12 +53,6 @@ namespace dae {
 
 		}
 
-		const size_t amountOfPlanes{ m_PlaneGeometries.size() };
-		for (size_t index{}; index < amountOfPlanes; ++index)
-		{
-			GeometryUtils::HitTest_Plane(m_PlaneGeometries[index], ray, closestHit);
-		}
-
 		if (GeometryUtils::SlabTest_TriangleMesh(m_AABB.min, m_AABB.max, ray))
 		{
 			const size_t amountOfTrianglesMeshes{ m_TriangleMeshGeometries.size() };
@@ -66,6 +60,12 @@ namespace dae {
 			{
 				GeometryUtils::HitTest_TriangleMesh(m_TriangleMeshGeometries[index], ray, closestHit);
 			}
+		}
+
+		const size_t amountOfPlanes{ m_PlaneGeometries.size() };
+		for (size_t index{}; index < amountOfPlanes; ++index)
+		{
+			GeometryUtils::HitTest_Plane(m_PlaneGeometries[index], ray, closestHit);
 		}
 	}
 
@@ -445,8 +445,8 @@ namespace dae {
 		{
 			m->RotateY(yawAngle);
 			m->UpdateTransforms();
-			m_AABB.grow(m->transformedMinAABB);
-			m_AABB.grow(m->transformedMaxAABB);
+			m_AABB.Grow(m->transformedMinAABB);
+			m_AABB.Grow(m->transformedMaxAABB);
 		}
 	}
 #pragma endregion
@@ -481,11 +481,24 @@ namespace dae {
 		m_pMesh->UpdateAABB();
 		m_pMesh->UpdateTransforms();
 
+		m_pMesh->BuildBVH();
+
 		//Lights
 		AddPointLight(Vector3{ 0.f, 5.f, 5.f }, 50.f, ColorRGB{ 1.f, .61f, .45f }); //Back Light
 		AddPointLight(Vector3{ -2.5f, 5.f, -5.f }, 70.f, ColorRGB{ 1.f, .8f, .45f }); //Front Left Light
 		AddPointLight(Vector3{ 2.5f, 2.5f, -5.f }, 50.f, ColorRGB{ .34f, .47f, .68f });
 	}
 
+	void Scene_W4_BunnyScene::Update(Timer* pTimer)
+	{
+		Scene::Update(pTimer);
+
+		const auto yawAngle = (cos(pTimer->GetTotal()) + 1.f) / 2.f * PI_2;
+		
+		//m_pMesh->RotateY(yawAngle);
+		//m_pMesh->UpdateTransforms();
+		m_AABB.Grow(m_pMesh->bvhNodes[m_pMesh->rootNodeIndex].AABBMin);
+		m_AABB.Grow(m_pMesh->bvhNodes[m_pMesh->rootNodeIndex].AABBMax);
+	}
 #pragma endregion
 }
