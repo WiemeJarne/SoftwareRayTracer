@@ -430,6 +430,10 @@ namespace dae {
 		m_Meshes[2]->UpdateAABB();
 		m_Meshes[2]->UpdateTransforms();
 
+		m_Meshes[0]->BuildBVH();
+		m_Meshes[1]->BuildBVH();
+		m_Meshes[2]->BuildBVH();
+
 		//Lights
 		AddPointLight(Vector3{ 0.f, 5.f, 5.f }, 50.f, ColorRGB{ 1.f, .61f, .45f }); //Back Light
 		AddPointLight(Vector3{ -2.5f, 5.f, -5.f }, 70.f, ColorRGB{ 1.f, .8f, .45f }); //Front Left Light
@@ -445,8 +449,8 @@ namespace dae {
 		{
 			m->RotateY(yawAngle);
 			m->UpdateTransforms();
-			m_AABB.Grow(m->transformedMinAABB);
-			m_AABB.Grow(m->transformedMaxAABB);
+			m_AABB.Grow(m->bvhNodes[m->rootNodeIndex].AABBMin);
+			m_AABB.Grow(m->bvhNodes[m->rootNodeIndex].AABBMax);
 		}
 	}
 #pragma endregion
