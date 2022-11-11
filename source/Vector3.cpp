@@ -45,7 +45,7 @@ namespace dae {
 
 	float Vector3::Dot(const Vector3& v1, const Vector3& v2)
 	{
-		return {v1.x * v2.x + v1.y * v2.y + v1.z * v2.z};
+		return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
 	}
 
 	Vector3 Vector3::Cross(const Vector3& v1, const Vector3& v2)
@@ -79,7 +79,7 @@ namespace dae {
 			std::max(v1.x, v2.x),
 			std::max(v1.y, v2.y),
 			std::max(v1.z, v2.z)
-		};
+		  };
 	}
 
 	Vector3 Vector3::Min(const Vector3& v1, const Vector3& v2)
@@ -89,7 +89,7 @@ namespace dae {
 			std::min(v1.x, v2.x),
 			std::min(v1.y, v2.y),
 			std::min(v1.z, v2.z)
-		};
+		  };
 	}
 
 	Vector4 Vector3::ToPoint4() const

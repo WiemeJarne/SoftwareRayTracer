@@ -37,9 +37,8 @@ namespace dae
 
 		Matrix CalculateCameraToWorld()
 		{
-			//todo: W2
-			Vector3 right{ Vector3::Cross(up, forward).Normalized() };
-			Vector3 up{ Vector3::Cross(forward, right).Normalized() };
+			const Vector3 right{ Vector3::Cross(up, forward).Normalized() };
+			const Vector3 up{ Vector3::Cross(forward, right).Normalized() };
 			cameraToWorld =
 			{
 				{right, 0},

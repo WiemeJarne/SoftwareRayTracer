@@ -74,14 +74,11 @@ namespace dae {
 		return *this;
 	}
 
-	float Matrix::Determinant()
+	float Matrix::Determinant() const
 	{
-		return
-		{
-			data[0].x * (data[1].y * data[2].z - data[1].z * data[2].y)
-			- data[0].y * (data[1].x * data[2].z - data[1].z * data[2].x)
-			+ data[0].z * (data[1].x * data[2].y - data[1].y * data[2].x)
-		};
+		return data[0].x * (data[1].y * data[2].z - data[1].z * data[2].y)
+			 - data[0].y * (data[1].x * data[2].z - data[1].z * data[2].x)
+			 + data[0].z * (data[1].x * data[2].y - data[1].y * data[2].x);
 	}
 
 	Matrix Matrix::Transpose(const Matrix& m)
@@ -114,14 +111,13 @@ namespace dae {
 
 	Matrix Matrix::CreateTranslation(float x, float y, float z)
 	{
-		//todo W1
 		return
 		{ 
 			{1, 0, 0, 0},
 			{0, 1, 0, 0},
 			{0, 0, 1, 0},
 			{x, y, z, 1}
-		};
+		  };
 	}
 
 	Matrix Matrix::CreateTranslation(const Vector3& t)
@@ -131,19 +127,17 @@ namespace dae {
 
 	Matrix Matrix::CreateRotationX(float pitch)
 	{
-		//todo W1
 		return
 		{
 			{1, 0, 0, 0},
 			{0, cos(pitch), -sin(pitch), 0},
 			{0, sin(pitch), cos(pitch), 0},
 			{0, 0, 0, 1}
-		};
+		  };
 	}
 
 	Matrix Matrix::CreateRotationY(float yaw)
 	{
-		//todo W1
 		return
 		{
 			{cos(yaw), 0, -sin(yaw), 0},
@@ -151,24 +145,22 @@ namespace dae {
 			{sin(yaw), 0, cos(yaw), 0},
 			{0, 0, 0, 1}
 			
-		};
+		  };
 	}
 
 	Matrix Matrix::CreateRotationZ(float roll)
 	{
-		//todo W1
 		return 
 		{
 			{cos(roll), sin(roll), 0, 0},
 			{-sin(roll), cos(roll), 0, 0},
 			{0, 0, 1, 0},
 			{0, 0, 0, 1}
-		};
+		  };
 	}
 
 	Matrix Matrix::CreateRotation(const Vector3& r)
 	{
-		//todo W1
 		return { CreateRotationX(r.x) * CreateRotationY(r.y) * CreateRotationZ(r.z) };
 	}
 
@@ -179,14 +171,13 @@ namespace dae {
 
 	Matrix Matrix::CreateScale(float sx, float sy, float sz)
 	{
-		//todo W1
 		return
 		{
 			{sx, 0, 0, 0},
 			{0, sy, 0, 0},
 			{0, 0, sz, 0},
 			{0, 0, 0, 1}
-		};
+		  };
 	}
 
 	Matrix Matrix::CreateScale(const Vector3& s)

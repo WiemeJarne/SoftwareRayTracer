@@ -240,7 +240,7 @@ namespace dae
 		}
 #pragma endregion
 
-		inline bool IntersectBVH(const TriangleMesh& mesh, const Ray& ray, int nodeIndex, HitRecord& hitRecord, bool ignoreHitRecord = false)
+		inline bool HitTest_BVH(const TriangleMesh& mesh, const Ray& ray, int nodeIndex, HitRecord& hitRecord, std::vector<int>& triangleIndicesToTest, bool ignoreHitRecord = false)
 		{
 			const BVHNode& node{ mesh.bvhNodes[nodeIndex] };
 
@@ -248,33 +248,12 @@ namespace dae
 
 			if (node.amountOfMeshes != 0)
 			{
-				HitRecord tempHitRecord{};
-
-				for (int index{}; index < node.amountOfMeshes; ++index)
-				{
-					Triangle triangle{};
-					triangle.cullMode = mesh.cullMode;
-					triangle.materialIndex = mesh.materialIndex;
-					triangle.materialType = mesh.materialType;
-					triangle.normal = mesh.transformedNormals[node.leftChildIndex + index];
-					triangle.v0 = mesh.transformedPositions[mesh.indices[(node.leftChildIndex + index) * 3]];
-					triangle.v1 = mesh.transformedPositions[mesh.indices[(node.leftChildIndex + index) * 3 + 1]];
-					triangle.v2 = mesh.transformedPositions[mesh.indices[(node.leftChildIndex + index) * 3 + 2]];
-
-					HitTest_Triangle(triangle, ray, tempHitRecord, ignoreHitRecord);
-
-					if (tempHitRecord.didHit && tempHitRecord.t < hitRecord.t)
-					{
-						hitRecord = tempHitRecord;
-					}
-				}
-
-				return tempHitRecord.didHit;
+				triangleIndicesToTest.push_back(nodeIndex);
 			}
 			else
 			{
-				IntersectBVH(mesh, ray, node.leftChildIndex, hitRecord, ignoreHitRecord);
-				IntersectBVH(mesh, ray, node.leftChildIndex + 1, hitRecord, ignoreHitRecord); //leftChildIndex + 1 == rightChildIndex
+				HitTest_BVH(mesh, ray, node.leftChildIndex, hitRecord, triangleIndicesToTest, ignoreHitRecord);
+				HitTest_BVH(mesh, ray, node.leftChildIndex + 1, hitRecord, triangleIndicesToTest, ignoreHitRecord); //leftChildIndex + 1 == rightChildIndex
 			}
 		}
 
@@ -287,7 +266,48 @@ namespace dae
 				return false;
 			}
 
-			 return IntersectBVH(mesh, ray, mesh.rootNodeIndex, hitRecord, ignoreHitRecord);
+			Triangle triangle{};
+			triangle.cullMode = mesh.cullMode;
+			triangle.materialIndex = mesh.materialIndex;
+			triangle.materialType = mesh.materialType;
+
+			if(mesh.useBVH)
+			{
+				std::vector<int> trianglesToTestIndices{};
+				 HitTest_BVH(mesh, ray, mesh.rootNodeIndex, hitRecord, trianglesToTestIndices, ignoreHitRecord);
+
+				 if (trianglesToTestIndices.empty()) return false;
+
+				for (int index{}; index < trianglesToTestIndices.size(); ++index)
+				{
+					 int start{ mesh.bvhNodes[trianglesToTestIndices[index]].leftChildIndex };
+					 int end{ start + mesh.bvhNodes[trianglesToTestIndices[index]].amountOfMeshes };
+					 for (int index{start}; index < end; ++index)
+					 {
+						 triangle.normal = mesh.transformedNormals[index];
+						 triangle.v0 = mesh.transformedPositions[mesh.indices[index * 3]];
+						 triangle.v1 = mesh.transformedPositions[mesh.indices[index * 3 + 1]];
+						 triangle.v2 = mesh.transformedPositions[mesh.indices[index * 3 + 2]];
+
+						 if (HitTest_Triangle(triangle, ray, hitRecord, ignoreHitRecord) && ignoreHitRecord) return true;
+					 }
+				}	 
+			}
+			else
+			{
+				const int amountOfTriangles{ static_cast<int>(mesh.indices.size()) / 3 };
+				for (int index{}; index < amountOfTriangles; ++index)
+				{
+					triangle.normal = mesh.transformedNormals[index];
+					triangle.v0 = mesh.transformedPositions[mesh.indices[index * 3]];
+					triangle.v1 = mesh.transformedPositions[mesh.indices[index * 3 + 1]];
+					triangle.v2 = mesh.transformedPositions[mesh.indices[index * 3 + 2]];
+
+					if (HitTest_Triangle(triangle, ray, hitRecord, ignoreHitRecord) && ignoreHitRecord) return true;
+				}
+			}
+
+			return false;
 		}
 
 		inline bool HitTest_TriangleMesh(const TriangleMesh& mesh, const Ray& ray)

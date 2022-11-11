@@ -1,9 +1,6 @@
 #pragma once
 #include <cassert>
-#include <iostream>
 #include "Math.h"
-#include "vector"
-#include <string>
 
 namespace dae
 {
@@ -86,9 +83,9 @@ namespace dae
 			max = Vector3::Max(max, position);
 		}
 
-		float Area()
+		float Area() const
 		{
-			Vector3 extent{ max - min };
+			const Vector3 extent{ max - min };
 			return extent.x * extent.y + extent.y * extent.z + extent.z * extent.x;
 		}
 	};
@@ -136,6 +133,7 @@ namespace dae
 
 		std::vector<BVHNode> bvhNodes;
 		int rootNodeIndex{ 0 }, amountOfUsedNodes{ 1 };
+		bool useBVH{ true };
 
 		void Translate(const Vector3& translation)
 		{
@@ -482,6 +480,24 @@ namespace dae
 					std::swap(indices[left * 3 + 2], indices[right * 3 + 2]);
 					--right;
 				}
+			}
+		}
+
+		void RefitBVH()
+		{
+			for (int index{ amountOfUsedNodes - 1 }; index >= 0; --index) if(index != 1)
+			{
+				BVHNode& node{ bvhNodes[index] };
+				if (node.amountOfMeshes != 0)
+				{
+					UpdateNodeBounds(index);
+					continue;
+				}
+
+				BVHNode& leftChild{ bvhNodes[node.leftChildIndex] };
+				BVHNode& rightChild{ bvhNodes[node.leftChildIndex + 1] };
+				node.AABBMin = Vector3::Min(leftChild.AABBMin, rightChild.AABBMin);
+				node.AABBMax = Vector3::Max(leftChild.AABBMax, rightChild.AABBMax);
 			}
 		}
 	};

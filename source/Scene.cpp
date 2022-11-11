@@ -46,24 +46,24 @@ namespace dae {
 
 	void dae::Scene::GetClosestHit(const Ray& ray, HitRecord& closestHit) const
 	{
-		const size_t amountOfSpheres{ m_SphereGeometries.size() };
-		for (size_t index{}; index < amountOfSpheres; ++index)
+		const int amountOfSpheres{ static_cast<int>(m_SphereGeometries.size()) };
+		for (int index{}; index < amountOfSpheres; ++index)
 		{
 			GeometryUtils::HitTest_Sphere(m_SphereGeometries[index], ray, closestHit);
 
 		}
 
-		if (GeometryUtils::SlabTest_TriangleMesh(m_AABB.min, m_AABB.max, ray))
+		if (GeometryUtils::SlabTest_TriangleMesh(m_AABBTriangleMeshes.min, m_AABBTriangleMeshes.max, ray))
 		{
-			const size_t amountOfTrianglesMeshes{ m_TriangleMeshGeometries.size() };
-			for (size_t index{}; index < amountOfTrianglesMeshes; ++index)
+			const int amountOfTrianglesMeshes{ static_cast<int>(m_TriangleMeshGeometries.size()) };
+			for (int index{}; index < amountOfTrianglesMeshes; ++index)
 			{
 				GeometryUtils::HitTest_TriangleMesh(m_TriangleMeshGeometries[index], ray, closestHit);
 			}
 		}
 
-		const size_t amountOfPlanes{ m_PlaneGeometries.size() };
-		for (size_t index{}; index < amountOfPlanes; ++index)
+		const int amountOfPlanes{ static_cast<int>(m_PlaneGeometries.size()) };
+		for (int index{}; index < amountOfPlanes; ++index)
 		{
 			GeometryUtils::HitTest_Plane(m_PlaneGeometries[index], ray, closestHit);
 		}
@@ -71,11 +71,10 @@ namespace dae {
 
 	bool Scene::DoesHit(const Ray& ray) const
 	{
-		//todo W3
 		HitRecord closestHit{};
 
-		const size_t amountOfSpheres{ m_SphereGeometries.size() };
-		for (size_t index{}; index < amountOfSpheres; ++index)
+		const int amountOfSpheres{ static_cast<int>(m_SphereGeometries.size()) };
+		for (int index{}; index < amountOfSpheres; ++index)
 		{
 			if (GeometryUtils::HitTest_Sphere(m_SphereGeometries[index], ray, closestHit, true))
 			{
@@ -83,19 +82,10 @@ namespace dae {
 			}
 		}
 
-		const size_t amountOfPlanes{ m_PlaneGeometries.size() };
-		for (size_t index{}; index < amountOfPlanes; ++index)
+		if (GeometryUtils::SlabTest_TriangleMesh(m_AABBTriangleMeshes.min, m_AABBTriangleMeshes.max, ray))
 		{
-			if (GeometryUtils::HitTest_Plane(m_PlaneGeometries[index], ray, closestHit, true))
-			{
-				return true;
-			}
-		}
-
-		if (GeometryUtils::SlabTest_TriangleMesh(m_AABB.min, m_AABB.max, ray))
-		{
-			const size_t amountOfTriangles{ m_TriangleMeshGeometries.size() };
-			for (size_t index{}; index < amountOfTriangles; ++index)
+			const int amountOfTriangles{ static_cast<int>(m_TriangleMeshGeometries.size()) };
+			for (int index{}; index < amountOfTriangles; ++index)
 			{
 				if (GeometryUtils::HitTest_TriangleMesh(m_TriangleMeshGeometries[index], ray, closestHit, true))
 				{
@@ -103,6 +93,16 @@ namespace dae {
 				}
 			}
 		}
+
+		const int amountOfPlanes{static_cast<int>(m_PlaneGeometries.size()) };
+		for (int index{}; index < amountOfPlanes; ++index)
+		{
+			if (GeometryUtils::HitTest_Plane(m_PlaneGeometries[index], ray, closestHit, true))
+			{
+				return true;
+			}
+		}
+
 		return false;
 	}
 
@@ -430,9 +430,14 @@ namespace dae {
 		m_Meshes[2]->UpdateAABB();
 		m_Meshes[2]->UpdateTransforms();
 
-		m_Meshes[0]->BuildBVH();
-		m_Meshes[1]->BuildBVH();
-		m_Meshes[2]->BuildBVH();
+		//to turn on bvh comment the next three lines
+		m_Meshes[0]->useBVH = false;
+		m_Meshes[1]->useBVH = false;
+		m_Meshes[2]->useBVH = false;
+
+		if (m_Meshes[0]->useBVH) m_Meshes[0]->BuildBVH();
+		if (m_Meshes[1]->useBVH) m_Meshes[1]->BuildBVH();
+		if (m_Meshes[2]->useBVH) m_Meshes[2]->BuildBVH();
 
 		//Lights
 		AddPointLight(Vector3{ 0.f, 5.f, 5.f }, 50.f, ColorRGB{ 1.f, .61f, .45f }); //Back Light
@@ -449,8 +454,18 @@ namespace dae {
 		{
 			m->RotateY(yawAngle);
 			m->UpdateTransforms();
-			m_AABB.Grow(m->bvhNodes[m->rootNodeIndex].AABBMin);
-			m_AABB.Grow(m->bvhNodes[m->rootNodeIndex].AABBMax);
+			
+			if (m->useBVH)
+			{
+				m->RefitBVH();
+				m_AABBTriangleMeshes.Grow(m->bvhNodes[m->rootNodeIndex].AABBMin);
+				m_AABBTriangleMeshes.Grow(m->bvhNodes[m->rootNodeIndex].AABBMax);
+			}
+			else
+			{
+				m_AABBTriangleMeshes.Grow(m->transformedMinAABB);
+				m_AABBTriangleMeshes.Grow(m->transformedMaxAABB);
+			}
 		}
 	}
 #pragma endregion
@@ -485,7 +500,8 @@ namespace dae {
 		m_pMesh->UpdateAABB();
 		m_pMesh->UpdateTransforms();
 
-		m_pMesh->BuildBVH();
+		//m_pMesh->useBVH = false; //to turn off bvh uncommnent this line
+		if(m_pMesh->useBVH) m_pMesh->BuildBVH();
 
 		//Lights
 		AddPointLight(Vector3{ 0.f, 5.f, 5.f }, 50.f, ColorRGB{ 1.f, .61f, .45f }); //Back Light
@@ -499,10 +515,20 @@ namespace dae {
 
 		const auto yawAngle = (cos(pTimer->GetTotal()) + 1.f) / 2.f * PI_2;
 		
-		//m_pMesh->RotateY(yawAngle);
-		//m_pMesh->UpdateTransforms();
-		m_AABB.Grow(m_pMesh->bvhNodes[m_pMesh->rootNodeIndex].AABBMin);
-		m_AABB.Grow(m_pMesh->bvhNodes[m_pMesh->rootNodeIndex].AABBMax);
+		m_pMesh->RotateY(yawAngle);
+		m_pMesh->UpdateTransforms();
+
+		if (m_pMesh->useBVH)
+		{
+			m_pMesh->RefitBVH();
+			m_AABBTriangleMeshes.Grow(m_pMesh->bvhNodes[m_pMesh->rootNodeIndex].AABBMin);
+			m_AABBTriangleMeshes.Grow(m_pMesh->bvhNodes[m_pMesh->rootNodeIndex].AABBMax);
+		}
+		else
+		{
+			m_AABBTriangleMeshes.Grow(m_pMesh->transformedMinAABB);
+			m_AABBTriangleMeshes.Grow(m_pMesh->transformedMaxAABB);
+		}
 	}
 #pragma endregion
 }

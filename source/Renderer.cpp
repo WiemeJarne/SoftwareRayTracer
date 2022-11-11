@@ -278,19 +278,36 @@ void Renderer::CalculateFinalColor
 		}
 		break;
 
-	//case LightingMode::Radiance:
-	//	finalColor += LightUtils::GetRadiance(light, closestHit.origin);
-	//	break;
-	//
-	//case LightingMode::BRFD:
-	//	finalColor += materials[closestHit.materialIndex]->Shade(closestHit, toLight, rayDirection);	
-	//	break;
-	//
-	//case LightingMode::ObservedArea:
-	//	if (observedArea > 0.f)
-	//	{
-	//		finalColor += ColorRGB{ 1.f, 1.f, 1.f } * observedArea;
-	//	}
-	//	break;
+	case LightingMode::ObservedArea:
+		if (observedArea > 0.f)
+		{
+			finalColor += ColorRGB{ 1.f, 1.f, 1.f } *observedArea;
+		}
+		break;
+
+	case LightingMode::Radiance:
+		finalColor += LightUtils::GetRadiance(light, closestHit.origin);
+		break;
+	
+	case LightingMode::BRFD:
+		switch (closestHit.materialType)
+		{
+		case MaterialType::solidColor:
+			finalColor += solidColorMaterials[closestHit.materialIndex]->Shade(closestHit, toLight, rayDirection);
+			break;
+
+		case MaterialType::lambert:
+			finalColor += lambertMaterials[closestHit.materialIndex]->Shade(closestHit, toLight, rayDirection);
+			break;
+
+		case MaterialType::lambertPhong:
+			finalColor += lambertPhongMaterials[closestHit.materialIndex]->Shade(closestHit, toLight, rayDirection);
+			break;
+
+		case MaterialType::cookTorrence:
+			finalColor += cookTorrenceMaterials[closestHit.materialIndex]->Shade(closestHit, toLight, rayDirection);
+			break;
+		}
+		break;
 	}
 }

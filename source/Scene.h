@@ -60,7 +60,7 @@ namespace dae
 		std::vector<Material_LambertPhong*> m_LambertPhongMaterials{};
 		std::vector<Material_CookTorrence*> m_CookTorrenceMaterials{};
 
-		AABB m_AABB{};
+		AABB m_AABBTriangleMeshes{}; //an AABB around all the triangleMeshes
 
 		Camera m_Camera{};
 
